@@ -1,0 +1,3123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>CV Management Dashboard — Internal n8n Automation Workspace</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-fast {
+      animation: spinSlow 0.9s linear infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-blue-600 selection:text-white overflow-x-hidden">
+
+  <!-- ======================================================================
+       DESKTOP COLLAPSIBLE SIDEBAR
+  ======================================================================= -->
+  <aside id="desktop-sidebar" class="hidden md:flex flex-col bg-slate-900 text-slate-100 border-r border-slate-800 transition-all duration-200 shrink-0 w-64">
+    <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
+      <div id="sidebar-brand-text" class="flex flex-col truncate">
+        <span class="text-sm font-semibold tracking-tight text-white truncate">CV Management</span>
+        <span class="text-[11px] text-slate-400 font-medium">Internal n8n Workspace</span>
+      </div>
+      <button type="button" id="btn-toggle-sidebar" title="Toggle sidebar width" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+        <span id="sidebar-toggle-icon"></span>
+      </button>
+    </div>
+
+    <nav id="desktop-nav" class="flex-1 py-5 px-3 space-y-1.5"></nav>
+
+    <div class="p-3 border-t border-slate-800/80">
+      <button type="button" id="btn-sidebar-webhook-status" class="w-full flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/70 hover:bg-slate-800 text-left transition-colors" title="Configure n8n Webhook Integration">
+        <span id="sidebar-webhook-dot" class="w-2.5 h-2.5 rounded-full shrink-0 bg-amber-400"></span>
+        <div id="sidebar-webhook-text" class="min-w-0 flex-1">
+          <p id="sidebar-webhook-label" class="text-xs font-medium text-slate-200 truncate">Webhook Unconfigured</p>
+          <p id="sidebar-webhook-sub" class="text-[11px] text-slate-400 truncate">Click to set endpoint</p>
+        </div>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======================================================================
+       MOBILE HEADER & NAVIGATION DRAWER
+  ======================================================================= -->
+  <div class="md:hidden bg-slate-900 text-white px-4 h-14 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <button type="button" id="btn-open-mobile-menu" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800" aria-label="Open navigation menu">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      </button>
+      <span class="font-semibold text-sm tracking-tight">CV Management Dashboard</span>
+    </div>
+    <button type="button" id="btn-mobile-quick-upload" class="px-3 py-1.5 rounded-lg bg-blue-600 text-xs font-medium text-white flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+      Upload
+    </button>
+  </div>
+
+  <div id="mobile-drawer" class="fixed inset-0 z-50 md:hidden hidden">
+    <div id="mobile-drawer-backdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
+    <div class="relative w-72 max-w-[82vw] bg-slate-900 text-slate-100 flex flex-col h-full z-10 shadow-xl">
+      <div class="h-14 px-4 flex items-center justify-between border-b border-slate-800">
+        <div>
+          <p class="text-sm font-semibold text-white">CV Management</p>
+          <p class="text-[11px] text-slate-400">Internal n8n Tool</p>
+        </div>
+        <button type="button" id="btn-close-mobile-menu" class="p-1.5 rounded-lg text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <nav id="mobile-nav" class="flex-1 p-3 space-y-1"></nav>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MAIN WORKSPACE CONTAINER
+  ======================================================================= -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Top Desktop Bar -->
+    <header class="hidden md:flex h-16 bg-white border-b border-slate-200/90 px-8 items-center justify-between sticky top-0 z-20">
+      <div>
+        <h1 id="header-title" class="text-lg font-semibold text-slate-900 tracking-tight">Dashboard Overview</h1>
+        <p id="header-subtitle" class="text-xs text-slate-500">Real-time internal metrics, workflow execution state, and recent CV activity</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="button" id="btn-header-webhook-pill" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100">
+          <span id="header-webhook-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span id="header-webhook-text">Configure n8n Webhook</span>
+        </button>
+
+        <button type="button" id="btn-open-n8n-guide" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+          <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          n8n Setup Guide
+        </button>
+
+        <button type="button" id="btn-header-upload-cta" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+          Upload New CVs
+        </button>
+      </div>
+    </header>
+
+    <!-- Unconfigured Webhook Banner -->
+    <div id="unconfigured-webhook-banner" class="mx-4 md:mx-8 mt-4 p-4 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div>
+          <h2 class="text-xs font-semibold text-amber-900">n8n Webhook Endpoint Not Configured</h2>
+          <p class="text-xs text-amber-800 mt-0.5 leading-relaxed">
+            To transmit binary CV files to n8n, configure your HTTPS Webhook URL in <strong>Settings</strong>. This application never simulates fake webhook responses.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="btn-banner-guide" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white text-amber-900 border border-amber-300 hover:bg-amber-100/50 transition-colors">
+          View CORS &amp; Node Setup
+        </button>
+        <button type="button" id="btn-banner-settings" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900 text-white hover:bg-amber-800 transition-colors">
+          Configure Webhook
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Dynamic View Container -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <!-- VIEW 1: DASHBOARD -->
+      <section id="view-dashboard" class="space-y-6"></section>
+
+      <!-- VIEW 2: UPLOAD CENTER -->
+      <section id="view-upload" class="space-y-6 hidden">
+        <!-- Upload Constraints Bar -->
+        <div id="upload-constraints-bar" class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-wrap items-center justify-between gap-4"></div>
+
+        <!-- Drag & Drop Zone -->
+        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50/50 p-10 md:p-14 text-center transition-all cursor-pointer">
+          <input id="file-input" type="file" multiple accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" />
+          <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-sm">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+          </div>
+          <h2 class="mt-4 text-base font-semibold text-slate-900">Drag and drop CV files here, or click to browse</h2>
+          <p id="drop-zone-subtitle" class="mt-1.5 text-xs text-slate-500 max-w-md mx-auto">
+            Upload single or multiple candidate CVs simultaneously. Supports .PDF, .DOC, .DOCX up to 15 MB per file.
+          </p>
+          <div class="mt-6 flex items-center justify-center gap-3">
+            <button type="button" id="btn-browse-files" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>
+              Browse Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Staged Files Preview Table Container -->
+        <div id="staged-files-container"></div>
+      </section>
+
+      <!-- VIEW 3: CV LIBRARY -->
+      <section id="view-library" class="space-y-4 hidden">
+        <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm space-y-3">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div class="relative flex-1 max-w-md">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input id="library-search-input" type="text" placeholder="Search by CV filename or unique ID..." class="w-full pl-9 pr-8 py-2 rounded-lg border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600" />
+              <button type="button" id="btn-clear-library-search" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <select id="library-status-filter" aria-label="Filter by processing status" class="py-2 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-600">
+                <option value="ALL">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Uploading">Uploading</option>
+                <option value="Sent to n8n">Sent to n8n</option>
+                <option value="Processing">Processing</option>
+                <option value="Completed">Completed</option>
+                <option value="Failed">Failed</option>
+              </select>
+
+              <select id="library-type-filter" aria-label="Filter by file type" class="py-2 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-600">
+                <option value="ALL">All Formats</option>
+                <option value="pdf">PDF (.pdf)</option>
+                <option value="docx">DOCX (.docx)</option>
+                <option value="doc">DOC (.doc)</option>
+              </select>
+
+              <select id="library-sort-order" aria-label="Sort CV records" class="py-2 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-600">
+                <option value="newest">Upload Date: Newest First</option>
+                <option value="oldest">Upload Date: Oldest First</option>
+                <option value="size_desc">File Size: Largest First</option>
+                <option value="name_asc">Filename: A → Z</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="library-bulk-bar" class="hidden pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3"></div>
+        </div>
+
+        <div id="library-table-container" class="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden"></div>
+      </section>
+
+      <!-- VIEW 4: PROCESSING HISTORY -->
+      <section id="view-history" class="space-y-4 hidden">
+        <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="relative flex-1 max-w-md">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="history-search-input" type="text" placeholder="Filter events by filename, CV ID, batch ID, or message..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-600" />
+          </div>
+          <div class="flex items-center gap-2.5">
+            <select id="history-status-filter" aria-label="Filter history by status" class="py-2 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700">
+              <option value="ALL">All Event Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Uploading">Uploading</option>
+              <option value="Sent to n8n">Sent to n8n</option>
+              <option value="Processing">Processing</option>
+              <option value="Completed">Completed</option>
+              <option value="Failed">Failed</option>
+            </select>
+            <button type="button" id="btn-clear-history-log" class="px-3 py-2 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+              Clear Log
+            </button>
+          </div>
+        </div>
+
+        <div id="history-list-container" class="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden"></div>
+      </section>
+
+      <!-- VIEW 5: SETTINGS -->
+      <section id="view-settings" class="space-y-6 hidden"></section>
+    </main>
+  </div>
+
+  <!-- ======================================================================
+       CV DETAILS SLIDE-OVER DRAWER
+  ======================================================================= -->
+  <div id="cv-details-drawer" class="fixed inset-0 z-50 hidden justify-end">
+    <div id="cv-details-backdrop" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm"></div>
+    <div id="cv-details-content" class="relative w-full max-w-xl bg-white h-full shadow-2xl border-l border-slate-200 z-10 flex flex-col overflow-hidden"></div>
+  </div>
+
+  <!-- ======================================================================
+       N8N WORKFLOW & CORS SETUP GUIDE MODAL
+  ======================================================================= -->
+  <div id="n8n-guide-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="n8n-guide-backdrop" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-2xl border border-slate-200 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl z-10 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+          <h2 class="text-sm font-semibold text-slate-900">n8n Webhook Configuration &amp; GitHub Pages Guide</h2>
+        </div>
+        <button type="button" id="btn-close-n8n-guide-top" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed custom-scrollbar">
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">1. Configuring the n8n Webhook Node</h3>
+          <p class="mt-1">In your n8n workflow, add a <strong>Webhook</strong> trigger node with these settings:</p>
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li><strong>HTTP Method:</strong> <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">POST</code></li>
+            <li><strong>Path:</strong> e.g. <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">cv-upload</code></li>
+            <li><strong>Respond:</strong> Choose <em>"Using 'Respond to Webhook' Node"</em> (or <em>"When Last Node Finishes"</em>) so n8n confirms when CV processing has actually finished.</li>
+            <li><strong>Binary Property:</strong> The browser sends <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">multipart/form-data</code> with binary field name <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">file</code> alongside metadata fields (<code class="font-mono">cvId</code>, <code class="font-mono">filename</code>, <code class="font-mono">fileSize</code>, <code class="font-mono">mimeType</code>, <code class="font-mono">uploadTimestamp</code>, <code class="font-mono">batchId</code>).</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">2. Enabling CORS for GitHub Pages Static Hosting</h3>
+          <p class="mt-1">
+            In your n8n Webhook node under <strong>Options → Allowed Origins (CORS)</strong>, set your GitHub Pages domain (e.g. <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">https://your-username.github.io</code>) or <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">*</code>.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">3. Returning Explicit Workflow Completion JSON</h3>
+          <p class="mt-1">
+            Because an HTTP 200 alone only means the webhook received the file (<strong>Sent to n8n</strong>), add a <strong>Respond to Webhook</strong> node at the end of your n8n workflow returning:
+          </p>
+          <pre class="mt-2 p-3 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto">{
+  "status": "completed",
+  "cvId": "{{ $json.body.cvId }}",
+  "executionId": "{{ $execution.id }}",
+  "storageConfirmed": true,
+  "storageUrl": "https://drive.google.com/...",
+  "message": "CV parsed and stored in candidate database"
+}</pre>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end">
+        <button type="button" id="btn-close-n8n-guide-bottom" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800">
+          Got It
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       CONFIRMATION DIALOG MODAL (No window.confirm / window.alert)
+  ======================================================================= -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="confirm-modal-backdrop" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-2xl z-10 space-y-4">
+      <div class="flex items-start gap-3">
+        <div id="confirm-modal-icon-box" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-rose-50 text-rose-600">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </div>
+        <div>
+          <h3 id="confirm-modal-title" class="text-sm font-semibold text-slate-900">Confirm Action</h3>
+          <p id="confirm-modal-desc" class="text-xs text-slate-600 mt-1 leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" id="btn-confirm-cancel" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+        <button type="button" id="btn-confirm-proceed" class="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       TOAST NOTIFICATION CONTAINER
+  ======================================================================= -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- ======================================================================
+       APPLICATION LOGIC (Vanilla JS + Fetch API + FormData + IndexedDB)
+  ======================================================================= -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ====================================================================
+      // CONSTANTS & DEFAULT SETTINGS
+      // ====================================================================
+      var SETTINGS_KEY = 'cv_dashboard_settings_v1';
+      var CONN_TEST_KEY = 'cv_dashboard_conn_test_v1';
+      var IDB_NAME = 'CVManagementInternalDB';
+      var IDB_VERSION = 1;
+      var STORE_CVS = 'cv_records';
+      var STORE_BLOBS = 'cv_blobs';
+      var STORE_HISTORY = 'processing_history';
+
+      var DEFAULT_SETTINGS = {
+        webhookUrl: '',
+        statusEndpointUrl: '',
+        requireExplicitCompletionFlag: true,
+        completionJsonField: 'status',
+        completionJsonValue: 'completed',
+        maxFileSizeMB: 15,
+        allowedFormats: ['pdf', 'doc', 'docx'],
+        batchUploadMode: 'sequential',
+        maxConcurrentUploads: 3,
+        requestTimeoutSec: 45,
+        preventDuplicateFilenames: true,
+        defaultPageSize: 10,
+        storeBinaryInIndexedDB: true,
+        autoPollStatus: false,
+        pollIntervalSec: 30
+      };
+
+      // ====================================================================
+      // APPLICATION STATE
+      // ====================================================================
+      var state = {
+        activeTab: 'dashboard',
+        sidebarCollapsed: false,
+        settings: Object.assign({}, DEFAULT_SETTINGS),
+        settingsDraft: Object.assign({}, DEFAULT_SETTINGS),
+        connTestResult: null,
+        isTestingConnection: false,
+        cvRecords: [],
+        historyEvents: [],
+        stagedFiles: [],
+        isBatchProcessing: false,
+        activeBatchId: null,
+        activeUploadIds: new Set(),
+        // Library filters
+        searchQuery: '',
+        statusFilter: 'ALL',
+        typeFilter: 'ALL',
+        sortOrder: 'newest',
+        currentPage: 1,
+        selectedCvIds: new Set(),
+        // Details drawer
+        inspectedCvId: null,
+        // History filters
+        historySearch: '',
+        historyStatusFilter: 'ALL',
+        // Confirm modal callback
+        confirmCallback: null
+      };
+
+      // In-memory fallback if browser restricts IndexedDB/LocalStorage in sandboxed contexts
+      var memoryFallback = {
+        settings: Object.assign({}, DEFAULT_SETTINGS),
+        connTest: null,
+        cvs: new Map(),
+        blobs: new Map(),
+        history: []
+      };
+
+      // ====================================================================
+      // INLINE SVG ICONS HELPER
+      // ====================================================================
+      var ICONS = {
+        dashboard: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>',
+        upload: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>',
+        library: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/></svg>',
+        history: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+        settings: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+        chevronLeft: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>',
+        chevronRight: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>',
+        checkCircle: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+        refresh: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+        send: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+        clock: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+        xCircle: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+        eye: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+        download: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+        trash: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+        fileText: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+        calendar: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>'
+      };
+
+      // ====================================================================
+      // UTILITY FUNCTIONS
+      // ====================================================================
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function generateId(prefix) {
+        var p = prefix || 'cv';
+        var rand = Math.random().toString(36).substring(2, 9);
+        var time = Date.now().toString(36);
+        return p + '_' + time + '_' + rand;
+      }
+
+      function formatBytes(bytes) {
+        var b = Number(bytes) || 0;
+        if (b === 0) return '0 B';
+        var k = 1024;
+        var sizes = ['B', 'KB', 'MB', 'GB'];
+        var i = Math.floor(Math.log(b) / Math.log(k));
+        return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      function formatDateTime(iso) {
+        try {
+          var d = new Date(iso);
+          return d.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+        } catch (e) {
+          return String(iso || '');
+        }
+      }
+
+      function formatShortDate(iso) {
+        try {
+          var d = new Date(iso);
+          return d.toLocaleString(undefined, {
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (e) {
+          return String(iso || '');
+        }
+      }
+
+      function isSameLocalDay(iso) {
+        try {
+          var d = new Date(iso);
+          var now = new Date();
+          return (
+            d.getFullYear() === now.getFullYear() &&
+            d.getMonth() === now.getMonth() &&
+            d.getDate() === now.getDate()
+          );
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function getFileExtension(filename) {
+        var parts = String(filename || '').trim().split('.');
+        if (parts.length < 2) return '';
+        return parts[parts.length - 1].toLowerCase();
+      }
+
+      function inferMimeType(filename, browserMime) {
+        if (browserMime && browserMime.trim() !== '') return browserMime;
+        var ext = getFileExtension(filename);
+        if (ext === 'pdf') return 'application/pdf';
+        if (ext === 'doc') return 'application/msword';
+        if (ext === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        return 'application/octet-stream';
+      }
+
+      function copyToClipboard(text) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(function () {});
+            return true;
+          }
+        } catch (e) {}
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // ====================================================================
+      // BADGE RENDER HELPERS
+      // ====================================================================
+      function renderStatusBadge(status, size) {
+        var pad = size === 'sm' ? 'px-2 py-0.5 text-xs gap-1' : 'px-2.5 py-1 text-xs gap-1.5';
+        if (status === 'Completed') {
+          return '<span class="inline-flex items-center font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 ' + pad + '">' + ICONS.checkCircle + '<span>Completed</span></span>';
+        }
+        if (status === 'Processing') {
+          return '<span class="inline-flex items-center font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 ' + pad + '"><span class="animate-spin-fast inline-flex">' + ICONS.refresh + '</span><span>Processing</span></span>';
+        }
+        if (status === 'Sent to n8n') {
+          return '<span class="inline-flex items-center font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 ' + pad + '">' + ICONS.send + '<span>Sent to n8n</span></span>';
+        }
+        if (status === 'Uploading') {
+          return '<span class="inline-flex items-center font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200 ' + pad + '"><span class="animate-spin-fast inline-flex">' + ICONS.refresh + '</span><span>Uploading</span></span>';
+        }
+        if (status === 'Pending') {
+          return '<span class="inline-flex items-center font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 ' + pad + '">' + ICONS.clock + '<span>Pending</span></span>';
+        }
+        return '<span class="inline-flex items-center font-medium rounded-full bg-rose-50 text-rose-700 border border-rose-200 ' + pad + '">' + ICONS.xCircle + '<span>Failed</span></span>';
+      }
+
+      function renderFileTypeBadge(ext) {
+        var clean = String(ext || '').toLowerCase();
+        if (clean === 'pdf') {
+          return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase bg-red-50 text-red-700 border border-red-200">PDF</span>';
+        }
+        if (clean === 'docx') {
+          return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-200">DOCX</span>';
+        }
+        if (clean === 'doc') {
+          return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase bg-sky-50 text-sky-700 border border-sky-200">DOC</span>';
+        }
+        return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase bg-slate-100 text-slate-700 border border-slate-200">' + escapeHtml(clean || 'FILE') + '</span>';
+      }
+
+      // ====================================================================
+      // TOAST & CONFIRMATION MODAL SYSTEM
+      // ====================================================================
+      function addToast(type, title, detail) {
+        var container = document.getElementById('toast-container');
+        if (!container) return;
+        var toastEl = document.createElement('div');
+        toastEl.className = 'pointer-events-auto bg-white rounded-xl border border-slate-200 shadow-lg p-3.5 flex items-start gap-3 transition-all';
+        var iconHtml = ICONS.checkCircle;
+        var iconColor = 'text-blue-600';
+        if (type === 'success') iconColor = 'text-emerald-600';
+        else if (type === 'error') { iconHtml = ICONS.xCircle; iconColor = 'text-rose-600'; }
+        else if (type === 'warning') { iconHtml = ICONS.clock; iconColor = 'text-amber-600'; }
+
+        toastEl.innerHTML =
+          '<div class="' + iconColor + ' shrink-0 mt-0.5">' + iconHtml + '</div>' +
+          '<div class="min-w-0 flex-1">' +
+            '<p class="text-xs font-semibold text-slate-900">' + escapeHtml(title) + '</p>' +
+            (detail ? '<p class="text-[11px] text-slate-600 mt-0.5 leading-relaxed">' + escapeHtml(detail) + '</p>' : '') +
+          '</div>';
+        container.appendChild(toastEl);
+        setTimeout(function () {
+          if (toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
+        }, 4800);
+      }
+
+      function openConfirmModal(title, description, confirmLabel, onConfirm) {
+        var modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-desc').textContent = description;
+        document.getElementById('btn-confirm-proceed').textContent = confirmLabel || 'Confirm';
+        state.confirmCallback = onConfirm;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeConfirmModal() {
+        var modal = document.getElementById('confirm-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        state.confirmCallback = null;
+      }
+
+      // ====================================================================
+      // LOCALSTORAGE & INDEXEDDB PERSISTENCE ENGINE
+      // ====================================================================
+      function loadSettings() {
+        try {
+          var raw = window.localStorage.getItem(SETTINGS_KEY);
+          if (!raw) return Object.assign({}, DEFAULT_SETTINGS);
+          return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+        } catch (e) {
+          return Object.assign({}, memoryFallback.settings);
+        }
+      }
+
+      function saveSettings(newSettings) {
+        memoryFallback.settings = Object.assign({}, newSettings);
+        try {
+          window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+        } catch (e) {}
+      }
+
+      function loadConnTest() {
+        try {
+          var raw = window.localStorage.getItem(CONN_TEST_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return memoryFallback.connTest;
+        }
+      }
+
+      function saveConnTest(res) {
+        memoryFallback.connTest = res;
+        try {
+          if (!res) window.localStorage.removeItem(CONN_TEST_KEY);
+          else window.localStorage.setItem(CONN_TEST_KEY, JSON.stringify(res));
+        } catch (e) {}
+      }
+
+      function openDB() {
+        return new Promise(function (resolve) {
+          try {
+            if (!window.indexedDB) {
+              resolve(null);
+              return;
+            }
+            var req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
+            req.onerror = function () { resolve(null); };
+            req.onupgradeneeded = function (evt) {
+              var db = evt.target.result;
+              if (!db.objectStoreNames.contains(STORE_CVS)) {
+                db.createObjectStore(STORE_CVS, { keyPath: 'id' });
+              }
+              if (!db.objectStoreNames.contains(STORE_BLOBS)) {
+                db.createObjectStore(STORE_BLOBS, { keyPath: 'cvId' });
+              }
+              if (!db.objectStoreNames.contains(STORE_HISTORY)) {
+                db.createObjectStore(STORE_HISTORY, { keyPath: 'id' });
+              }
+            };
+            req.onsuccess = function () { resolve(req.result); };
+          } catch (e) {
+            resolve(null);
+          }
+        });
+      }
+
+      function dbGetAllCVs() {
+        return openDB().then(function (db) {
+          if (!db) {
+            return Array.from(memoryFallback.cvs.values()).sort(function (a, b) {
+              return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+            });
+          }
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction(STORE_CVS, 'readonly');
+              var req = tx.objectStore(STORE_CVS).getAll();
+              req.onsuccess = function () {
+                var list = req.result || [];
+                list.sort(function (a, b) {
+                  return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+                });
+                resolve(list);
+              };
+              req.onerror = function () { resolve(Array.from(memoryFallback.cvs.values())); };
+            } catch (e) {
+              resolve(Array.from(memoryFallback.cvs.values()));
+            }
+          });
+        });
+      }
+
+      function dbSaveCV(record, fileBlob) {
+        memoryFallback.cvs.set(record.id, record);
+        if (fileBlob) memoryFallback.blobs.set(record.id, fileBlob);
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var stores = fileBlob ? [STORE_CVS, STORE_BLOBS] : [STORE_CVS];
+              var tx = db.transaction(stores, 'readwrite');
+              tx.objectStore(STORE_CVS).put(record);
+              if (fileBlob) {
+                tx.objectStore(STORE_BLOBS).put({
+                  cvId: record.id,
+                  blob: fileBlob,
+                  filename: record.filename,
+                  mimeType: record.mimeType,
+                  savedAt: new Date().toISOString()
+                });
+              }
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbGetBlob(cvId) {
+        if (memoryFallback.blobs.has(cvId)) {
+          return Promise.resolve(memoryFallback.blobs.get(cvId));
+        }
+        return openDB().then(function (db) {
+          if (!db) return null;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction(STORE_BLOBS, 'readonly');
+              var req = tx.objectStore(STORE_BLOBS).get(cvId);
+              req.onsuccess = function () {
+                resolve(req.result && req.result.blob ? req.result.blob : null);
+              };
+              req.onerror = function () { resolve(null); };
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        });
+      }
+
+      function dbDeleteBlobOnly(cvId) {
+        memoryFallback.blobs.delete(cvId);
+        var existing = memoryFallback.cvs.get(cvId);
+        if (existing) {
+          existing.hasLocalBlob = false;
+          memoryFallback.cvs.set(cvId, existing);
+        }
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction([STORE_BLOBS, STORE_CVS], 'readwrite');
+              tx.objectStore(STORE_BLOBS).delete(cvId);
+              var getReq = tx.objectStore(STORE_CVS).get(cvId);
+              getReq.onsuccess = function () {
+                if (getReq.result) {
+                  var updated = Object.assign({}, getReq.result, { hasLocalBlob: false });
+                  tx.objectStore(STORE_CVS).put(updated);
+                }
+              };
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbDeleteCV(cvId) {
+        memoryFallback.cvs.delete(cvId);
+        memoryFallback.blobs.delete(cvId);
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction([STORE_CVS, STORE_BLOBS], 'readwrite');
+              tx.objectStore(STORE_CVS).delete(cvId);
+              tx.objectStore(STORE_BLOBS).delete(cvId);
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbAddHistoryEvent(evt) {
+        memoryFallback.history.unshift(evt);
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction(STORE_HISTORY, 'readwrite');
+              tx.objectStore(STORE_HISTORY).put(evt);
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbGetAllHistory() {
+        return openDB().then(function (db) {
+          if (!db) {
+            return memoryFallback.history.slice().sort(function (a, b) {
+              return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+            });
+          }
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction(STORE_HISTORY, 'readonly');
+              var req = tx.objectStore(STORE_HISTORY).getAll();
+              req.onsuccess = function () {
+                var list = req.result || [];
+                list.sort(function (a, b) {
+                  return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+                });
+                resolve(list);
+              };
+              req.onerror = function () { resolve(memoryFallback.history.slice()); };
+            } catch (e) {
+              resolve(memoryFallback.history.slice());
+            }
+          });
+        });
+      }
+
+      function dbClearHistoryOnly() {
+        memoryFallback.history = [];
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction(STORE_HISTORY, 'readwrite');
+              tx.objectStore(STORE_HISTORY).clear();
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbPurgeAllBlobs(records) {
+        memoryFallback.blobs.clear();
+        records.forEach(function (r) {
+          r.hasLocalBlob = false;
+          memoryFallback.cvs.set(r.id, r);
+        });
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction([STORE_BLOBS, STORE_CVS], 'readwrite');
+              tx.objectStore(STORE_BLOBS).clear();
+              var cvStore = tx.objectStore(STORE_CVS);
+              records.forEach(function (r) {
+                cvStore.put(Object.assign({}, r, { hasLocalBlob: false }));
+              });
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      function dbClearEverything() {
+        memoryFallback.cvs.clear();
+        memoryFallback.blobs.clear();
+        memoryFallback.history = [];
+        return openDB().then(function (db) {
+          if (!db) return;
+          return new Promise(function (resolve) {
+            try {
+              var tx = db.transaction([STORE_CVS, STORE_BLOBS, STORE_HISTORY], 'readwrite');
+              tx.objectStore(STORE_CVS).clear();
+              tx.objectStore(STORE_BLOBS).clear();
+              tx.objectStore(STORE_HISTORY).clear();
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror = function () { resolve(); };
+            } catch (e) {
+              resolve();
+            }
+          });
+        });
+      }
+
+      // ====================================================================
+      // N8N RESPONSE INTERPRETATION ENGINE
+      // Strictly distinguishes HTTP 200 ("Sent to n8n") vs "Processing" vs "Completed"
+      // ====================================================================
+      function interpretN8nResponse(httpStatus, statusText, rawBody, durationMs, settings) {
+        var receivedAt = new Date().toISOString();
+        if (httpStatus < 200 || httpStatus >= 300) {
+          return {
+            derivedStatus: 'Failed',
+            summary: {
+              httpStatus: httpStatus,
+              statusText: statusText,
+              receivedAt: receivedAt,
+              durationMs: durationMs,
+              workflowStatus: 'http_error',
+              message: 'HTTP ' + httpStatus + ' (' + (statusText || 'Error') + ') returned by n8n endpoint.',
+              externalStorageConfirmed: false,
+              rawPayload: rawBody || ('HTTP ' + httpStatus + ' ' + statusText)
+            },
+            eventMessage: 'n8n Webhook returned HTTP ' + httpStatus + ' error.',
+            errorDetail: 'HTTP ' + httpStatus + ' ' + statusText + ': ' + (rawBody ? rawBody.slice(0, 300) : 'No response body')
+          };
+        }
+
+        var parsedJson = null;
+        try {
+          var candidate = JSON.parse(rawBody);
+          if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+            parsedJson = candidate;
+          } else if (Array.isArray(candidate) && candidate.length > 0 && typeof candidate[0] === 'object') {
+            parsedJson = candidate[0];
+          }
+        } catch (e) {
+          parsedJson = null;
+        }
+
+        if (!parsedJson) {
+          var unconfirmedStatus = settings.requireExplicitCompletionFlag ? 'Sent to n8n' : 'Completed';
+          return {
+            derivedStatus: unconfirmedStatus,
+            summary: {
+              httpStatus: httpStatus,
+              statusText: statusText,
+              receivedAt: receivedAt,
+              durationMs: durationMs,
+              workflowStatus: settings.requireExplicitCompletionFlag ? 'acknowledged_unconfirmed' : 'completed',
+              message: (rawBody && rawBody.trim()) || 'File received by n8n webhook (HTTP 200). Downstream workflow completion not yet confirmed.',
+              externalStorageConfirmed: false,
+              rawPayload: rawBody || '{"status": "received"}'
+            },
+            eventMessage: settings.requireExplicitCompletionFlag
+              ? 'Binary CV transmitted to n8n (HTTP 200). Awaiting downstream workflow completion confirmation.'
+              : 'Binary CV transmitted to n8n (HTTP 200).'
+          };
+        }
+
+        var executionId = parsedJson.executionId || parsedJson.execution_id || undefined;
+        var externalStorageRef = parsedJson.storageUrl || parsedJson.fileUrl || parsedJson.externalId || undefined;
+        var externalStorageConfirmed = Boolean(externalStorageRef) || parsedJson.storageConfirmed === true || parsedJson.permanentlyStored === true;
+
+        var customFieldVal = String(parsedJson[settings.completionJsonField] || '').toLowerCase();
+        var targetVal = String(settings.completionJsonValue || 'completed').toLowerCase();
+        var statusVal = String(parsedJson.status || parsedJson.workflowStatus || parsedJson.state || '').toLowerCase();
+        var messageVal = typeof parsedJson.message === 'string' ? parsedJson.message : (typeof parsedJson.detail === 'string' ? parsedJson.detail : undefined);
+
+        if (statusVal === 'failed' || statusVal === 'error' || parsedJson.success === false || Boolean(parsedJson.error)) {
+          var errText = typeof parsedJson.error === 'string' ? parsedJson.error : (messageVal || 'n8n workflow reported processing failure.');
+          return {
+            derivedStatus: 'Failed',
+            summary: {
+              httpStatus: httpStatus,
+              statusText: statusText,
+              receivedAt: receivedAt,
+              durationMs: durationMs,
+              executionId: executionId,
+              workflowStatus: 'failed',
+              message: errText,
+              externalStorageConfirmed: false,
+              rawPayload: JSON.stringify(parsedJson, null, 2)
+            },
+            eventMessage: 'n8n workflow reported failure: ' + errText,
+            errorDetail: errText
+          };
+        }
+
+        var isExplicitlyCompleted =
+          (customFieldVal !== '' && customFieldVal === targetVal) ||
+          statusVal === 'completed' ||
+          statusVal === 'complete' ||
+          statusVal === 'done' ||
+          statusVal === 'processed' ||
+          parsedJson.workflowCompleted === true ||
+          parsedJson.completed === true;
+
+        if (isExplicitlyCompleted) {
+          return {
+            derivedStatus: 'Completed',
+            summary: {
+              httpStatus: httpStatus,
+              statusText: statusText,
+              receivedAt: receivedAt,
+              durationMs: durationMs,
+              executionId: executionId,
+              workflowStatus: 'completed',
+              message: messageVal || 'n8n automation workflow confirmed complete.',
+              externalStorageConfirmed: externalStorageConfirmed,
+              externalStorageRef: externalStorageRef,
+              rawPayload: JSON.stringify(parsedJson, null, 2)
+            },
+            eventMessage: messageVal || 'n8n automation workflow confirmed CV processing completed.'
+          };
+        }
+
+        var isProcessing =
+          statusVal === 'processing' ||
+          statusVal === 'running' ||
+          statusVal === 'started' ||
+          statusVal === 'in_progress' ||
+          (messageVal && messageVal.toLowerCase().indexOf('workflow was started') !== -1);
+
+        if (isProcessing) {
+          return {
+            derivedStatus: 'Processing',
+            summary: {
+              httpStatus: httpStatus,
+              statusText: statusText,
+              receivedAt: receivedAt,
+              durationMs: durationMs,
+              executionId: executionId,
+              workflowStatus: statusVal || 'processing',
+              message: messageVal || 'n8n workflow execution started. Waiting for downstream workflow completion.',
+              externalStorageConfirmed: externalStorageConfirmed,
+              externalStorageRef: externalStorageRef,
+              rawPayload: JSON.stringify(parsedJson, null, 2)
+            },
+            eventMessage: messageVal || 'n8n webhook accepted file and started workflow execution (Status: Processing).'
+          };
+        }
+
+        var finalStatus = settings.requireExplicitCompletionFlag ? 'Sent to n8n' : 'Completed';
+        return {
+          derivedStatus: finalStatus,
+          summary: {
+            httpStatus: httpStatus,
+            statusText: statusText,
+            receivedAt: receivedAt,
+            durationMs: durationMs,
+            executionId: executionId,
+            workflowStatus: statusVal || 'sent_to_n8n',
+            message: messageVal || (finalStatus === 'Sent to n8n'
+              ? 'File delivered to n8n webhook (HTTP 200). Workflow completion not yet confirmed.'
+              : 'Webhook responded HTTP 200.'),
+            externalStorageConfirmed: externalStorageConfirmed,
+            externalStorageRef: externalStorageRef,
+            rawPayload: JSON.stringify(parsedJson, null, 2)
+          },
+          eventMessage: finalStatus === 'Sent to n8n'
+            ? 'CV delivered to n8n webhook (HTTP 200). Status set to "Sent to n8n" pending workflow completion confirmation.'
+            : 'CV delivered to n8n webhook (HTTP 200).'
+        };
+      }
+
+      // ====================================================================
+      // HTTP MULTIPART UPLOAD TO N8N VIA FETCH + FORMDATA
+      // ====================================================================
+      function transmitCvToN8n(record, fileBlob, onProgress) {
+        if (state.activeUploadIds.has(record.id)) {
+          return Promise.resolve(record);
+        }
+
+        if (!state.settings.webhookUrl || !state.settings.webhookUrl.trim()) {
+          var errText = 'n8n Webhook URL is not configured. Please configure a valid HTTPS Webhook endpoint in Settings before transmitting CVs.';
+          var failEvt = {
+            id: generateId('evt'),
+            cvId: record.id,
+            cvFilename: record.filename,
+            batchId: record.batchId,
+            timestamp: new Date().toISOString(),
+            status: 'Failed',
+            message: 'Upload aborted: n8n Webhook URL is not configured.',
+            errorDetail: errText
+          };
+          var failedRec = Object.assign({}, record, {
+            status: 'Failed',
+            uploadProgress: 0,
+            updatedAt: failEvt.timestamp,
+            errorDetails: errText,
+            history: [failEvt].concat(record.history || [])
+          });
+          return dbSaveCV(failedRec).then(function () {
+            return dbAddHistoryEvent(failEvt);
+          }).then(function () {
+            return refreshDataAndRender();
+          }).then(function () {
+            return failedRec;
+          });
+        }
+
+        return (fileBlob ? Promise.resolve(fileBlob) : dbGetBlob(record.id)).then(function (binaryToTransmit) {
+          if (!binaryToTransmit) {
+            var missingErr = 'Binary CV file is no longer available in local browser storage. Please re-select the original file in Upload CVs.';
+            var missEvt = {
+              id: generateId('evt'),
+              cvId: record.id,
+              cvFilename: record.filename,
+              batchId: record.batchId,
+              timestamp: new Date().toISOString(),
+              status: 'Failed',
+              message: 'Cannot transmit: binary file blob missing from local browser storage.',
+              errorDetail: missingErr
+            };
+            var missRec = Object.assign({}, record, {
+              status: 'Failed',
+              uploadProgress: 0,
+              updatedAt: missEvt.timestamp,
+              errorDetails: missingErr,
+              history: [missEvt].concat(record.history || [])
+            });
+            return dbSaveCV(missRec).then(function () {
+              return dbAddHistoryEvent(missEvt);
+            }).then(function () {
+              return refreshDataAndRender();
+            }).then(function () {
+              return missRec;
+            });
+          }
+
+          state.activeUploadIds.add(record.id);
+          var startTs = new Date().toISOString();
+          var startPerf = performance.now();
+
+          var startEvt = {
+            id: generateId('evt'),
+            cvId: record.id,
+            cvFilename: record.filename,
+            batchId: record.batchId,
+            timestamp: startTs,
+            status: 'Uploading',
+            message: 'Initiating multipart/form-data HTTP POST to n8n Webhook (' + formatBytes(record.fileSize) + ').'
+          };
+
+          var uploadingRec = Object.assign({}, record, {
+            status: 'Uploading',
+            uploadProgress: 25,
+            updatedAt: startTs,
+            errorDetails: undefined,
+            history: [startEvt].concat(record.history || [])
+          });
+
+          if (onProgress) onProgress(25, 'Uploading');
+
+          return dbSaveCV(uploadingRec).then(function () {
+            return dbAddHistoryEvent(startEvt);
+          }).then(function () {
+            var formData = new FormData();
+            formData.append('file', binaryToTransmit, record.filename);
+            formData.append('filename', record.filename);
+            formData.append('cvId', record.id);
+            formData.append('fileSize', String(record.fileSize));
+            formData.append('mimeType', record.mimeType);
+            formData.append('uploadTimestamp', record.uploadDate);
+            if (record.batchId) {
+              formData.append('batchId', record.batchId);
+            }
+
+            var controller = new AbortController();
+            var timeoutMs = Math.max(5, Number(state.settings.requestTimeoutSec) || 45) * 1000;
+            var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs);
+
+            if (onProgress) onProgress(65, 'Uploading');
+
+            // IMPORTANT: Do NOT set Content-Type manually on FormData so the browser sets multipart boundary
+            return fetch(state.settings.webhookUrl.trim(), {
+              method: 'POST',
+              body: formData,
+              signal: controller.signal,
+              mode: 'cors',
+              headers: {
+                Accept: 'application/json, text/plain, */*'
+              }
+            }).then(function (response) {
+              clearTimeout(timeoutId);
+              var durationMs = Math.round(performance.now() - startPerf);
+              return response.text().then(function (rawBody) {
+                var outcome = interpretN8nResponse(
+                  response.status,
+                  response.statusText,
+                  rawBody,
+                  durationMs,
+                  state.settings
+                );
+
+                var resEvt = {
+                  id: generateId('evt'),
+                  cvId: record.id,
+                  cvFilename: record.filename,
+                  batchId: record.batchId,
+                  timestamp: new Date().toISOString(),
+                  status: outcome.derivedStatus,
+                  message: outcome.eventMessage,
+                  httpStatus: response.status,
+                  durationMs: durationMs,
+                  rawResponse: outcome.summary.rawPayload,
+                  errorDetail: outcome.errorDetail
+                };
+
+                var finalRec = Object.assign({}, uploadingRec, {
+                  status: outcome.derivedStatus,
+                  uploadProgress: outcome.derivedStatus === 'Failed' ? 0 : 100,
+                  transmittedToN8n: response.ok,
+                  externalStorageConfirmed: Boolean(outcome.summary.externalStorageConfirmed),
+                  externalStorageRef: outcome.summary.externalStorageRef,
+                  n8nResponse: outcome.summary,
+                  errorDetails: outcome.errorDetail,
+                  updatedAt: resEvt.timestamp,
+                  history: [resEvt].concat(uploadingRec.history || [])
+                });
+
+                return dbSaveCV(finalRec).then(function () {
+                  return dbAddHistoryEvent(resEvt);
+                }).then(function () {
+                  state.activeUploadIds.delete(record.id);
+                  if (onProgress) onProgress(100, outcome.derivedStatus);
+                  return refreshDataAndRender().then(function () {
+                    return finalRec;
+                  });
+                });
+              });
+            }).catch(function (err) {
+              clearTimeout(timeoutId);
+              var durationMs = Math.round(performance.now() - startPerf);
+              var isAbort = err && err.name === 'AbortError';
+              var rawMsg = err && err.message ? err.message : 'Network error';
+              var detailedError = isAbort
+                ? 'Request timed out after ' + state.settings.requestTimeoutSec + ' seconds. Verify that your n8n workflow is active and responds within the configured timeout.'
+                : 'Network or CORS error while contacting n8n Webhook (' + rawMsg + '). Ensure the Webhook URL uses HTTPS, the n8n workflow is active, and CORS headers (Access-Control-Allow-Origin) are enabled on the n8n Webhook node.';
+
+              var failEvt2 = {
+                id: generateId('evt'),
+                cvId: record.id,
+                cvFilename: record.filename,
+                batchId: record.batchId,
+                timestamp: new Date().toISOString(),
+                status: 'Failed',
+                message: isAbort ? 'Webhook request timed out (' + state.settings.requestTimeoutSec + 's).' : 'Network/CORS failure during n8n webhook request.',
+                durationMs: durationMs,
+                errorDetail: detailedError
+              };
+
+              var failedRec2 = Object.assign({}, uploadingRec, {
+                status: 'Failed',
+                uploadProgress: 0,
+                updatedAt: failEvt2.timestamp,
+                errorDetails: detailedError,
+                history: [failEvt2].concat(uploadingRec.history || [])
+              });
+
+              return dbSaveCV(failedRec2).then(function () {
+                return dbAddHistoryEvent(failEvt2);
+              }).then(function () {
+                state.activeUploadIds.delete(record.id);
+                if (onProgress) onProgress(0, 'Failed');
+                return refreshDataAndRender().then(function () {
+                  return failedRec2;
+                });
+              });
+            });
+          });
+        });
+      }
+
+      function pollCvStatusFromN8n(record) {
+        if (!state.settings.statusEndpointUrl || !state.settings.statusEndpointUrl.trim()) {
+          addToast('warning', 'Status Endpoint Not Configured', 'Configure an optional Status-Check Endpoint URL in Settings to query downstream workflow completion.');
+          return;
+        }
+        var startPerf = performance.now();
+        try {
+          var url = new URL(state.settings.statusEndpointUrl.trim());
+          url.searchParams.set('cvId', record.id);
+          url.searchParams.set('filename', record.filename);
+          if (record.n8nResponse && record.n8nResponse.executionId) {
+            url.searchParams.set('executionId', record.n8nResponse.executionId);
+          }
+          fetch(url.toString(), {
+            method: 'GET',
+            mode: 'cors',
+            headers: { Accept: 'application/json' }
+          }).then(function (res) {
+            var durationMs = Math.round(performance.now() - startPerf);
+            return res.text().then(function (rawBody) {
+              var outcome = interpretN8nResponse(res.status, res.statusText, rawBody, durationMs, state.settings);
+              var pollEvt = {
+                id: generateId('evt'),
+                cvId: record.id,
+                cvFilename: record.filename,
+                batchId: record.batchId,
+                timestamp: new Date().toISOString(),
+                status: outcome.derivedStatus,
+                message: 'Polled n8n status endpoint: status is "' + outcome.derivedStatus + '".',
+                httpStatus: res.status,
+                durationMs: durationMs,
+                rawResponse: outcome.summary.rawPayload,
+                errorDetail: outcome.errorDetail
+              };
+              var updated = Object.assign({}, record, {
+                status: outcome.derivedStatus,
+                externalStorageConfirmed: record.externalStorageConfirmed || Boolean(outcome.summary.externalStorageConfirmed),
+                externalStorageRef: outcome.summary.externalStorageRef || record.externalStorageRef,
+                n8nResponse: outcome.summary,
+                errorDetails: outcome.errorDetail,
+                updatedAt: pollEvt.timestamp,
+                history: [pollEvt].concat(record.history || [])
+              });
+              return dbSaveCV(updated).then(function () {
+                return dbAddHistoryEvent(pollEvt);
+              }).then(function () {
+                return refreshDataAndRender();
+              }).then(function () {
+                addToast('info', 'Status Updated: ' + outcome.derivedStatus, record.filename + ' is now marked as ' + outcome.derivedStatus + '.');
+              });
+            });
+          }).catch(function (err) {
+            addToast('error', 'Status Poll Failed', err && err.message ? err.message : 'Network error');
+          });
+        } catch (e) {
+          addToast('error', 'Invalid Status Endpoint URL', 'Verify the Status-Check Endpoint URL in Settings.');
+        }
+      }
+
+      // ====================================================================
+      // FILE SELECTION & UPLOAD PROCESSING
+      // ====================================================================
+      function validateCandidateFile(file, stagedList, existingRecords) {
+        var ext = getFileExtension(file.name);
+        if (!ext || state.settings.allowedFormats.indexOf(ext) === -1) {
+          return {
+            isValid: false,
+            ext: ext || 'unknown',
+            error: 'Unsupported format (.' + (ext || 'none') + '). Allowed: ' + state.settings.allowedFormats.map(function (f) { return '.' + f.toUpperCase(); }).join(', ')
+          };
+        }
+        if (file.size === 0) {
+          return { isValid: false, ext: ext, error: 'File is empty (0 bytes).' };
+        }
+        var maxBytes = state.settings.maxFileSizeMB * 1024 * 1024;
+        if (file.size > maxBytes) {
+          return {
+            isValid: false,
+            ext: ext,
+            error: 'File size (' + formatBytes(file.size) + ') exceeds the maximum limit of ' + state.settings.maxFileSizeMB + ' MB.'
+          };
+        }
+        var dupStage = stagedList.some(function (s) {
+          return s.filename.toLowerCase() === file.name.toLowerCase() && s.fileSize === file.size;
+        });
+        if (dupStage) {
+          return { isValid: false, ext: ext, error: 'Duplicate file already in the current upload selection queue.' };
+        }
+        if (state.settings.preventDuplicateFilenames) {
+          var dupLib = existingRecords.some(function (r) {
+            return r.filename.toLowerCase() === file.name.toLowerCase() && r.fileSize === file.size && r.status !== 'Failed';
+          });
+          if (dupLib) {
+            return { isValid: false, ext: ext, error: 'A CV with this exact filename and file size already exists in your CV Library.' };
+          }
+        }
+        return { isValid: true, ext: ext };
+      }
+
+      function handleFilesSelected(fileList) {
+        var incoming = Array.prototype.slice.call(fileList || []);
+        if (incoming.length === 0) return;
+        var added = 0;
+        var invalid = 0;
+
+        incoming.forEach(function (file) {
+          var check = validateCandidateFile(file, state.stagedFiles, state.cvRecords);
+          if (check.isValid) added++;
+          else invalid++;
+
+          state.stagedFiles.push({
+            stagingId: generateId('stage'),
+            file: file,
+            filename: file.name,
+            fileSize: file.size,
+            fileType: check.ext || 'unknown',
+            mimeType: inferMimeType(file.name, file.type),
+            selectedAt: new Date().toISOString(),
+            isValid: check.isValid,
+            validationError: check.error,
+            uploadStatus: 'Ready',
+            uploadProgress: 0,
+            linkedCvId: null,
+            errorMessage: null
+          });
+        });
+
+        if (invalid > 0) {
+          addToast('warning', added + ' valid, ' + invalid + ' flagged with validation errors', 'Review the selected files list below before starting processing.');
+        } else if (added > 0) {
+          addToast('info', added + ' CV file' + (added > 1 ? 's' : '') + ' added to queue', 'Click "Start Processing" to validate, generate IDs, and transmit to n8n.');
+        }
+        renderAll();
+      }
+
+      function startUploadProcessing(targetStagingIds) {
+        var eligible = state.stagedFiles.filter(function (item) {
+          var statusOk = item.uploadStatus === 'Ready' || item.uploadStatus === 'Failed';
+          var targetOk = !targetStagingIds || targetStagingIds.indexOf(item.stagingId) !== -1;
+          return item.isValid && statusOk && targetOk;
+        });
+
+        if (eligible.length === 0) {
+          addToast('warning', 'No Valid Files Ready to Process', 'Select at least one valid PDF, DOC, or DOCX file.');
+          return;
+        }
+
+        if (!state.settings.webhookUrl || !state.settings.webhookUrl.trim()) {
+          addToast('error', 'n8n Webhook Not Configured', 'Please configure your n8n Webhook URL in Settings before starting processing.');
+          return;
+        }
+
+        state.isBatchProcessing = true;
+        var batchId = eligible.length > 1 ? generateId('batch') : undefined;
+        state.activeBatchId = batchId || null;
+        renderAll();
+
+        var preparedQueue = [];
+        var chain = Promise.resolve();
+
+        eligible.forEach(function (staged) {
+          chain = chain.then(function () {
+            var cvId = staged.linkedCvId || generateId('cv');
+            var nowIso = new Date().toISOString();
+            var queuedEvt = {
+              id: generateId('evt'),
+              cvId: cvId,
+              cvFilename: staged.filename,
+              batchId: batchId,
+              timestamp: nowIso,
+              status: 'Pending',
+              message: 'CV validated and assigned ID ' + cvId + (batchId ? ' (Batch ' + batchId + ')' : '') + '. Ready for n8n Webhook transmission.'
+            };
+            var newRec = {
+              id: cvId,
+              batchId: batchId,
+              filename: staged.filename,
+              fileSize: staged.fileSize,
+              fileType: staged.fileType,
+              mimeType: staged.mimeType,
+              uploadDate: nowIso,
+              updatedAt: nowIso,
+              status: 'Pending',
+              uploadProgress: 5,
+              hasLocalBlob: Boolean(state.settings.storeBinaryInIndexedDB),
+              transmittedToN8n: false,
+              externalStorageConfirmed: false,
+              retryCount: 0,
+              history: [queuedEvt]
+            };
+            staged.linkedCvId = cvId;
+            preparedQueue.push({ stagingId: staged.stagingId, record: newRec, file: staged.file });
+            return dbSaveCV(newRec, state.settings.storeBinaryInIndexedDB ? staged.file : null).then(function () {
+              return dbAddHistoryEvent(queuedEvt);
+            });
+          });
+        });
+
+        chain.then(function () {
+          return refreshDataAndRender();
+        }).then(function () {
+          var results = [];
+          var seqChain = Promise.resolve();
+
+          preparedQueue.forEach(function (qItem) {
+            seqChain = seqChain.then(function () {
+              var stItem = state.stagedFiles.find(function (s) { return s.stagingId === qItem.stagingId; });
+              if (stItem) {
+                stItem.uploadStatus = 'Uploading';
+                stItem.uploadProgress = 20;
+                stItem.errorMessage = null;
+                renderUploadView();
+              }
+              return transmitCvToN8n(qItem.record, qItem.file, function (pct, st) {
+                var target = state.stagedFiles.find(function (s) { return s.stagingId === qItem.stagingId; });
+                if (target) {
+                  target.uploadProgress = pct;
+                  target.uploadStatus = st === 'Pending' ? 'Ready' : st;
+                  renderUploadView();
+                }
+              }).then(function (updatedRec) {
+                var target = state.stagedFiles.find(function (s) { return s.stagingId === qItem.stagingId; });
+                if (target) {
+                  target.uploadProgress = updatedRec.status === 'Failed' ? 0 : 100;
+                  target.uploadStatus = updatedRec.status === 'Pending' ? 'Ready' : updatedRec.status;
+                  target.errorMessage = updatedRec.errorDetails || null;
+                }
+                results.push(updatedRec);
+                renderUploadView();
+              });
+            });
+          });
+
+          return seqChain.then(function () {
+            state.isBatchProcessing = false;
+            state.activeBatchId = null;
+            renderAll();
+            var okCount = results.filter(function (r) { return r.status !== 'Failed'; }).length;
+            var failCount = results.filter(function (r) { return r.status === 'Failed'; }).length;
+            if (failCount === 0) {
+              addToast('success', 'Processed ' + okCount + ' CV' + (okCount > 1 ? 's' : ''), 'All selected files were transmitted to your n8n Webhook.');
+            } else {
+              addToast('warning', 'Batch Finished: ' + okCount + ' Sent, ' + failCount + ' Failed', 'Inspect failed records in the CV Library for detailed diagnostics.');
+            }
+          });
+        });
+      }
+
+      // ====================================================================
+      // RECORD ACTIONS (Retry, Download, Delete, Manual Status Override)
+      // ====================================================================
+      function handleRetryCv(record) {
+        if (!state.settings.webhookUrl || !state.settings.webhookUrl.trim()) {
+          addToast('error', 'n8n Webhook Not Configured', 'Configure your n8n Webhook URL in Settings before retrying.');
+          return Promise.resolve();
+        }
+        var retryEvt = {
+          id: generateId('evt'),
+          cvId: record.id,
+          cvFilename: record.filename,
+          batchId: record.batchId,
+          timestamp: new Date().toISOString(),
+          status: 'Uploading',
+          message: 'Manual retry #' + ((record.retryCount || 0) + 1) + ' initiated.'
+        };
+        var updatedRec = Object.assign({}, record, {
+          retryCount: (record.retryCount || 0) + 1,
+          history: [retryEvt].concat(record.history || [])
+        });
+        return dbAddHistoryEvent(retryEvt).then(function () {
+          return dbGetBlob(record.id);
+        }).then(function (blob) {
+          return transmitCvToN8n(updatedRec, blob);
+        }).then(function (finalRec) {
+          if (finalRec.status !== 'Failed') {
+            addToast('success', 'Retry Succeeded (' + finalRec.status + ')', record.filename + ' was re-transmitted to n8n.');
+          } else {
+            addToast('error', 'Retry Failed for ' + record.filename, finalRec.errorDetails || 'Check webhook configuration.');
+          }
+        });
+      }
+
+      function handleBulkRetryFailed(targetIds) {
+        var failedList = state.cvRecords.filter(function (r) {
+          return r.status === 'Failed' && (!targetIds || targetIds.indexOf(r.id) !== -1);
+        });
+        if (failedList.length === 0) {
+          addToast('info', 'No Failed Records', 'There are no failed CV records to retry.');
+          return;
+        }
+        if (!state.settings.webhookUrl || !state.settings.webhookUrl.trim()) {
+          addToast('error', 'n8n Webhook Not Configured', 'Configure your n8n Webhook URL in Settings before retrying.');
+          return;
+        }
+        addToast('info', 'Retrying ' + failedList.length + ' Failed CVs...', 'Sending binary payloads to n8n Webhook.');
+        var seq = Promise.resolve();
+        failedList.forEach(function (rec) {
+          seq = seq.then(function () { return handleRetryCv(rec); });
+        });
+      }
+
+      function handleDownloadLocalCv(record) {
+        dbGetBlob(record.id).then(function (blob) {
+          if (!blob) {
+            addToast('error', 'Local Binary Not Available', 'The original binary file is not stored in local IndexedDB.');
+            return;
+          }
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = record.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+          addToast('success', 'Download Started', 'Downloading ' + record.filename);
+        });
+      }
+
+      function handleDeleteSingleCv(record) {
+        dbDeleteCV(record.id).then(function () {
+          state.selectedCvIds.delete(record.id);
+          if (state.inspectedCvId === record.id) {
+            state.inspectedCvId = null;
+          }
+          return refreshDataAndRender();
+        }).then(function () {
+          addToast('info', 'CV Record Deleted', 'Removed "' + record.filename + '" from browser storage.');
+        });
+      }
+
+      function handleManualStatusUpdate(record, nextStatus, note) {
+        var evt = {
+          id: generateId('evt'),
+          cvId: record.id,
+          cvFilename: record.filename,
+          batchId: record.batchId,
+          timestamp: new Date().toISOString(),
+          status: nextStatus,
+          message: note
+        };
+        var updated = Object.assign({}, record, {
+          status: nextStatus,
+          updatedAt: evt.timestamp,
+          errorDetails: nextStatus === 'Failed' ? record.errorDetails : undefined,
+          history: [evt].concat(record.history || [])
+        });
+        dbSaveCV(updated).then(function () {
+          return dbAddHistoryEvent(evt);
+        }).then(function () {
+          return refreshDataAndRender();
+        }).then(function () {
+          addToast('success', 'Status Updated to ' + nextStatus, note);
+        });
+      }
+
+      // ====================================================================
+      // COMPUTED STATISTICS
+      // ====================================================================
+      function computeStats() {
+        var list = state.cvRecords;
+        var total = list.length;
+        var completed = list.filter(function (r) { return r.status === 'Completed'; }).length;
+        var processing = list.filter(function (r) {
+          return r.status === 'Uploading' || r.status === 'Sent to n8n' || r.status === 'Processing';
+        }).length;
+        var sentToN8n = list.filter(function (r) { return r.status === 'Sent to n8n'; }).length;
+        var activelyRunning = list.filter(function (r) { return r.status === 'Processing' || r.status === 'Uploading'; }).length;
+        var pending = list.filter(function (r) { return r.status === 'Pending'; }).length;
+        var failed = list.filter(function (r) { return r.status === 'Failed'; }).length;
+        var uploadedToday = list.filter(function (r) { return isSameLocalDay(r.uploadDate); }).length;
+        var localBlobsCount = list.filter(function (r) { return r.hasLocalBlob; }).length;
+        var transmittedCount = list.filter(function (r) { return r.transmittedToN8n; }).length;
+        var externalConfirmedCount = list.filter(function (r) { return r.externalStorageConfirmed; }).length;
+        var totalBytesStoredLocally = list.filter(function (r) { return r.hasLocalBlob; }).reduce(function (acc, r) { return acc + (r.fileSize || 0); }, 0);
+
+        return {
+          total: total,
+          completed: completed,
+          processing: processing,
+          sentToN8n: sentToN8n,
+          activelyRunning: activelyRunning,
+          pending: pending,
+          failed: failed,
+          uploadedToday: uploadedToday,
+          localBlobsCount: localBlobsCount,
+          transmittedCount: transmittedCount,
+          externalConfirmedCount: externalConfirmedCount,
+          totalBytesStoredLocally: totalBytesStoredLocally
+        };
+      }
+
+      // ====================================================================
+      // VIEW RENDERING FUNCTIONS
+      // ====================================================================
+      function setActiveTab(tabId) {
+        state.activeTab = tabId;
+        if (tabId === 'settings') {
+          state.settingsDraft = Object.assign({}, state.settings);
+        }
+        renderAll();
+      }
+
+      function renderNavigationAndChrome() {
+        var navItems = [
+          { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+          { id: 'upload', label: 'Upload CVs', icon: ICONS.upload, badge: state.stagedFiles.length > 0 ? state.stagedFiles.length : null },
+          { id: 'library', label: 'CV Library', icon: ICONS.library, badge: state.cvRecords.length > 0 ? state.cvRecords.length : null },
+          { id: 'history', label: 'Processing History', icon: ICONS.history },
+          { id: 'settings', label: 'Settings', icon: ICONS.settings }
+        ];
+
+        var sidebarEl = document.getElementById('desktop-sidebar');
+        var brandTextEl = document.getElementById('sidebar-brand-text');
+        var toggleIconEl = document.getElementById('sidebar-toggle-icon');
+        var whTextEl = document.getElementById('sidebar-webhook-text');
+
+        if (state.sidebarCollapsed) {
+          sidebarEl.classList.remove('w-64');
+          sidebarEl.classList.add('w-20');
+          brandTextEl.classList.add('hidden');
+          whTextEl.classList.add('hidden');
+          toggleIconEl.innerHTML = ICONS.chevronRight;
+        } else {
+          sidebarEl.classList.remove('w-20');
+          sidebarEl.classList.add('w-64');
+          brandTextEl.classList.remove('hidden');
+          whTextEl.classList.remove('hidden');
+          toggleIconEl.innerHTML = ICONS.chevronLeft;
+        }
+
+        var desktopNavHtml = '';
+        var mobileNavHtml = '';
+        navItems.forEach(function (item) {
+          var active = state.activeTab === item.id;
+          var btnClass = active
+            ? 'bg-blue-600 text-white shadow-sm'
+            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white';
+          var alignClass = state.sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-3.5';
+
+          desktopNavHtml +=
+            '<button type="button" data-nav-tab="' + item.id + '" class="w-full flex items-center ' + alignClass + ' py-2.5 rounded-lg text-sm font-medium transition-all ' + btnClass + '">' +
+              '<div class="flex items-center gap-3 min-w-0">' +
+                item.icon +
+                (!state.sidebarCollapsed ? '<span class="truncate">' + escapeHtml(item.label) + '</span>' : '') +
+              '</div>' +
+              (!state.sidebarCollapsed && item.badge !== null && item.badge !== undefined
+                ? '<span class="px-2 py-0.5 text-xs rounded-full font-semibold ' + (active ? 'bg-blue-700 text-white' : 'bg-slate-800 text-slate-300') + '">' + item.badge + '</span>'
+                : '') +
+            '</button>';
+
+          mobileNavHtml +=
+            '<button type="button" data-nav-tab="' + item.id + '" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium ' + btnClass + '">' +
+              '<div class="flex items-center gap-3">' + item.icon + '<span>' + escapeHtml(item.label) + '</span></div>' +
+              (item.badge !== null && item.badge !== undefined ? '<span class="px-2 py-0.5 text-xs rounded-full bg-slate-800 text-slate-200">' + item.badge + '</span>' : '') +
+            '</button>';
+        });
+
+        document.getElementById('desktop-nav').innerHTML = desktopNavHtml;
+        document.getElementById('mobile-nav').innerHTML = mobileNavHtml;
+
+        // Bind nav click listeners
+        var navButtons = document.querySelectorAll('[data-nav-tab]');
+        Array.prototype.forEach.call(navButtons, function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-nav-tab');
+            document.getElementById('mobile-drawer').classList.add('hidden');
+            setActiveTab(target);
+          });
+        });
+
+        // Header titles
+        var titles = {
+          dashboard: ['Dashboard Overview', 'Real-time internal metrics, workflow execution state, and recent CV activity'],
+          upload: ['CV Upload Center', 'Manually stage, validate, and transmit binary CV files to your n8n automation workflow'],
+          library: ['CV Library', 'Search, filter, inspect responses, download local copies, and manage all uploaded CVs'],
+          history: ['Processing History & Audit Log', 'Chronological log of all file validations, multipart HTTP transmissions, and workflow status events'],
+          settings: ['Integration & Application Settings', 'Configure n8n Webhook endpoints, file validation policies, and browser IndexedDB storage']
+        };
+        var currentMeta = titles[state.activeTab] || titles.dashboard;
+        document.getElementById('header-title').textContent = currentMeta[0];
+        document.getElementById('header-subtitle').textContent = currentMeta[1];
+
+        var isConfigured = Boolean(state.settings.webhookUrl && state.settings.webhookUrl.trim());
+        var bannerEl = document.getElementById('unconfigured-webhook-banner');
+        if (!isConfigured && state.activeTab !== 'settings') {
+          bannerEl.classList.remove('hidden');
+        } else {
+          bannerEl.classList.add('hidden');
+        }
+
+        // Webhook status indicators
+        var dotColor = !isConfigured
+          ? 'bg-amber-400'
+          : (state.connTestResult && state.connTestResult.success ? 'bg-emerald-400' : 'bg-blue-400');
+        document.getElementById('sidebar-webhook-dot').className = 'w-2.5 h-2.5 rounded-full shrink-0 ' + dotColor;
+        document.getElementById('sidebar-webhook-label').textContent = !isConfigured
+          ? 'Webhook Unconfigured'
+          : (state.connTestResult && state.connTestResult.success ? 'n8n Webhook Ready' : 'n8n Webhook Set');
+        document.getElementById('sidebar-webhook-sub').textContent = isConfigured
+          ? state.settings.webhookUrl.replace(/^https?:\/\//, '')
+          : 'Click to set endpoint';
+
+        var pillBtn = document.getElementById('btn-header-webhook-pill');
+        var pillDot = document.getElementById('header-webhook-dot');
+        var pillTxt = document.getElementById('header-webhook-text');
+        if (!isConfigured) {
+          pillBtn.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100';
+          pillDot.className = 'w-2 h-2 rounded-full bg-amber-500';
+          pillTxt.textContent = 'Configure n8n Webhook';
+        } else {
+          pillBtn.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/70';
+          pillDot.className = 'w-2 h-2 rounded-full ' + (state.connTestResult && state.connTestResult.success ? 'bg-emerald-500' : 'bg-blue-500');
+          pillTxt.textContent = 'n8n Endpoint Configured';
+        }
+
+        var uploadCta = document.getElementById('btn-header-upload-cta');
+        if (state.activeTab === 'upload') uploadCta.classList.add('hidden');
+        else uploadCta.classList.remove('hidden');
+
+        // Toggle section visibility
+        ['dashboard', 'upload', 'library', 'history', 'settings'].forEach(function (id) {
+          var sec = document.getElementById('view-' + id);
+          if (state.activeTab === id) sec.classList.remove('hidden');
+          else sec.classList.add('hidden');
+        });
+      }
+
+      // 1. RENDER DASHBOARD VIEW
+      function renderDashboardView() {
+        var container = document.getElementById('view-dashboard');
+        var stats = computeStats();
+
+        var segBarHtml = '';
+        if (stats.total > 0) {
+          if (stats.completed > 0) segBarHtml += '<div style="width:' + ((stats.completed / stats.total) * 100) + '%" class="bg-emerald-500 h-full"></div>';
+          if (stats.activelyRunning > 0) segBarHtml += '<div style="width:' + ((stats.activelyRunning / stats.total) * 100) + '%" class="bg-blue-500 h-full"></div>';
+          if (stats.sentToN8n > 0) segBarHtml += '<div style="width:' + ((stats.sentToN8n / stats.total) * 100) + '%" class="bg-indigo-500 h-full"></div>';
+          if (stats.pending > 0) segBarHtml += '<div style="width:' + ((stats.pending / stats.total) * 100) + '%" class="bg-amber-400 h-full"></div>';
+          if (stats.failed > 0) segBarHtml += '<div style="width:' + ((stats.failed / stats.total) * 100) + '%" class="bg-rose-500 h-full"></div>';
+        }
+
+        var breakdownRows = [
+          { label: 'Completed (Workflow Verified)', count: stats.completed, color: 'bg-emerald-500', status: 'Completed' },
+          { label: 'Processing (Workflow Running)', count: stats.activelyRunning, color: 'bg-blue-500', status: 'Processing' },
+          { label: 'Sent to n8n (HTTP 200 Received)', count: stats.sentToN8n, color: 'bg-indigo-500', status: 'Sent to n8n' },
+          { label: 'Pending (Local Queue)', count: stats.pending, color: 'bg-amber-400', status: 'Pending' },
+          { label: 'Failed Processing', count: stats.failed, color: 'bg-rose-500', status: 'Failed' }
+        ].map(function (row) {
+          var pct = stats.total > 0 ? Math.round((row.count / stats.total) * 100) : 0;
+          return (
+            '<div class="flex items-center justify-between text-xs">' +
+              '<button type="button" data-dash-filter-status="' + row.status + '" class="flex items-center gap-2.5 text-slate-700 hover:text-blue-600 transition-colors">' +
+                '<span class="w-2.5 h-2.5 rounded-full ' + row.color + '"></span>' +
+                '<span class="font-medium">' + escapeHtml(row.label) + '</span>' +
+              '</button>' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="font-semibold text-slate-900">' + row.count + '</span>' +
+                '<span class="text-slate-400 w-9 text-right">(' + pct + '%)</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        var recentHtml = '';
+        if (state.historyEvents.length === 0) {
+          recentHtml =
+            '<div class="flex-1 flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50 px-4">' +
+              '<p class="text-sm font-medium text-slate-800">No CV Activity Recorded Yet</p>' +
+              '<p class="text-xs text-slate-500 max-w-sm mt-1">Upload CV files in the Upload Center to track real-time validation, multipart HTTP requests, and n8n workflow execution events here.</p>' +
+              '<button type="button" data-dash-goto="upload" class="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors">Go to Upload Center</button>' +
+            '</div>';
+        } else {
+          recentHtml = '<div class="divide-y divide-slate-100 overflow-y-auto max-h-96 pr-1 custom-scrollbar">' +
+            state.historyEvents.slice(0, 8).map(function (evt) {
+              return (
+                '<div class="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-3">' +
+                  '<div class="min-w-0 flex-1">' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                      '<button type="button" data-inspect-cv="' + escapeHtml(evt.cvId) + '" class="text-xs font-semibold text-slate-900 hover:text-blue-600 truncate">' + escapeHtml(evt.cvFilename) + '</button>' +
+                      renderStatusBadge(evt.status, 'sm') +
+                      (evt.httpStatus ? '<span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">HTTP ' + evt.httpStatus + '</span>' : '') +
+                    '</div>' +
+                    '<p class="text-xs text-slate-600 mt-1">' + escapeHtml(evt.message) + '</p>' +
+                  '</div>' +
+                  '<span class="text-[11px] text-slate-400 whitespace-nowrap shrink-0">' + escapeHtml(formatShortDate(evt.timestamp)) + '</span>' +
+                '</div>'
+              );
+            }).join('') +
+          '</div>';
+        }
+
+        container.innerHTML =
+          '<!-- 6 Statistics Cards -->' +
+          '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">Total CVs Uploaded</span><div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">' + ICONS.fileText + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-slate-900 tracking-tight">' + stats.total + '</p><p class="text-[11px] text-slate-500 mt-1">' + stats.localBlobsCount + ' cached in browser DB</p></div>' +
+            '</div>' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">Successfully Processed</span><div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">' + ICONS.checkCircle + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-emerald-700 tracking-tight">' + stats.completed + '</p><p class="text-[11px] text-slate-500 mt-1">Confirmed by n8n workflow</p></div>' +
+            '</div>' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">Currently Processing</span><div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">' + ICONS.refresh + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-blue-700 tracking-tight">' + stats.processing + '</p><p class="text-[11px] text-slate-500 mt-1">' + stats.sentToN8n + ' Sent to n8n · ' + stats.activelyRunning + ' Active</p></div>' +
+            '</div>' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">Pending</span><div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">' + ICONS.clock + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-amber-700 tracking-tight">' + stats.pending + '</p><p class="text-[11px] text-slate-500 mt-1">Queued locally before send</p></div>' +
+            '</div>' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">Failed Processing</span><div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">' + ICONS.xCircle + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-rose-700 tracking-tight">' + stats.failed + '</p><p class="text-[11px] text-slate-500 mt-1">' + (stats.failed > 0 ? 'Eligible for retry' : 'No failed uploads') + '</p></div>' +
+            '</div>' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">' +
+              '<div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-500">CVs Uploaded Today</span><div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">' + ICONS.calendar + '</div></div>' +
+              '<div class="mt-3"><p class="text-2xl font-bold text-slate-900 tracking-tight">' + stats.uploadedToday + '</p><p class="text-[11px] text-slate-500 mt-1">Since 00:00 local time</p></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<!-- Quick Actions Bar -->' +
+          '<div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">' +
+            '<div>' +
+              '<h2 class="text-sm font-semibold text-slate-900">Quick Actions</h2>' +
+              '<p class="text-xs text-slate-500 mt-0.5">Manage manual CV uploads, inspect the repository, or retry failed n8n transmissions</p>' +
+            '</div>' +
+            '<div class="flex flex-wrap items-center gap-2.5">' +
+              '<button type="button" data-dash-goto="upload" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer">' + ICONS.upload + '<span>Upload New CVs</span></button>' +
+              '<button type="button" data-dash-goto="library" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors cursor-pointer">' + ICONS.library + '<span>View All CVs (' + stats.total + ')</span></button>' +
+              '<button type="button" id="btn-dash-retry-failed" ' + (stats.failed === 0 ? 'disabled' : '') + ' class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold border transition-colors ' + (stats.failed > 0 ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 cursor-pointer' : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed') + '">' + ICONS.refresh + '<span>Retry Failed Processing (' + stats.failed + ')</span></button>' +
+            '</div>' +
+          '</div>' +
+
+          '<!-- Processing Overview & Recent Activity -->' +
+          '<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">' +
+            '<div class="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between space-y-5">' +
+              '<div>' +
+                '<div class="flex items-center justify-between"><h2 class="text-sm font-semibold text-slate-900">Processing Overview</h2><span class="text-xs text-slate-500">' + stats.total + ' Total Record' + (stats.total === 1 ? '' : 's') + '</span></div>' +
+                '<p class="text-xs text-slate-500 mt-0.5">Distribution of CV records across pipeline stages</p>' +
+                '<div class="mt-4 h-3 w-full rounded-full bg-slate-100 overflow-hidden flex">' + segBarHtml + '</div>' +
+                '<div class="mt-5 space-y-3">' + breakdownRows + '</div>' +
+              '</div>' +
+              '<div class="pt-4 border-t border-slate-100">' +
+                '<h3 class="text-xs font-semibold text-slate-800">Storage &amp; Transmission State</h3>' +
+                '<div class="mt-2.5 grid grid-cols-3 gap-2 text-center">' +
+                  '<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/70"><p class="text-sm font-bold text-slate-900">' + stats.localBlobsCount + '</p><p class="text-[10px] text-slate-500 mt-0.5">Browser IndexedDB</p></div>' +
+                  '<div class="p-2.5 rounded-lg bg-indigo-50/50 border border-indigo-100"><p class="text-sm font-bold text-indigo-900">' + stats.transmittedCount + '</p><p class="text-[10px] text-indigo-700 mt-0.5">Sent to n8n</p></div>' +
+                  '<div class="p-2.5 rounded-lg bg-emerald-50/50 border border-emerald-100"><p class="text-sm font-bold text-emerald-900">' + stats.externalConfirmedCount + '</p><p class="text-[10px] text-emerald-700 mt-0.5">External Storage</p></div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-5 shadow-sm flex flex-col">' +
+              '<div class="flex items-center justify-between mb-4">' +
+                '<div><h2 class="text-sm font-semibold text-slate-900">Recent Activity</h2><p class="text-xs text-slate-500 mt-0.5">Latest CV uploads and n8n webhook processing events</p></div>' +
+                (state.historyEvents.length > 0 ? '<button type="button" data-dash-goto="history" class="text-xs font-medium text-blue-600 hover:text-blue-700">View Full Log →</button>' : '') +
+              '</div>' +
+              recentHtml +
+            '</div>' +
+          '</div>';
+
+        // Attach listeners
+        Array.prototype.forEach.call(container.querySelectorAll('[data-dash-goto]'), function (btn) {
+          btn.addEventListener('click', function () {
+            setActiveTab(btn.getAttribute('data-dash-goto'));
+          });
+        });
+        Array.prototype.forEach.call(container.querySelectorAll('[data-dash-filter-status]'), function (btn) {
+          btn.addEventListener('click', function () {
+            state.statusFilter = btn.getAttribute('data-dash-filter-status');
+            document.getElementById('library-status-filter').value = state.statusFilter;
+            setActiveTab('library');
+          });
+        });
+        Array.prototype.forEach.call(container.querySelectorAll('[data-inspect-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            state.inspectedCvId = btn.getAttribute('data-inspect-cv');
+            renderDetailsDrawer();
+          });
+        });
+        var retryBtn = document.getElementById('btn-dash-retry-failed');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', function () {
+            handleBulkRetryFailed();
+          });
+        }
+      }
+
+      // 2. RENDER UPLOAD CENTER VIEW
+      function renderUploadView() {
+        var constraintsBar = document.getElementById('upload-constraints-bar');
+        var formatsUpper = state.settings.allowedFormats.map(function (f) { return '.' + f.toUpperCase(); }).join(', ');
+
+        constraintsBar.innerHTML =
+          '<div class="flex flex-wrap items-center gap-4 text-xs text-slate-600">' +
+            '<span>Allowed Formats: <strong class="text-slate-900 uppercase">' + escapeHtml(state.settings.allowedFormats.join(', ')) + '</strong></span>' +
+            '<span class="text-slate-300">|</span>' +
+            '<span>Max File Size: <strong class="text-slate-900">' + state.settings.maxFileSizeMB + ' MB</strong></span>' +
+            '<span class="text-slate-300">|</span>' +
+            '<span>Mode: <strong class="text-slate-900 capitalize">' + escapeHtml(state.settings.batchUploadMode) + '</strong></span>' +
+          '</div>' +
+          '<button type="button" id="btn-upload-adjust-limits" class="text-xs font-medium text-blue-600 hover:text-blue-700">Adjust Upload Limits →</button>';
+
+        document.getElementById('btn-upload-adjust-limits').addEventListener('click', function () {
+          setActiveTab('settings');
+        });
+
+        document.getElementById('drop-zone-subtitle').textContent =
+          'Upload single or multiple candidate CVs simultaneously. Supports ' + formatsUpper + ' up to ' + state.settings.maxFileSizeMB + ' MB per file.';
+
+        var stagedContainer = document.getElementById('staged-files-container');
+        if (state.stagedFiles.length === 0) {
+          stagedContainer.innerHTML = '';
+          return;
+        }
+
+        var validCount = state.stagedFiles.filter(function (f) { return f.isValid; }).length;
+        var invalidCount = state.stagedFiles.filter(function (f) { return !f.isValid; }).length;
+        var readyCount = state.stagedFiles.filter(function (f) {
+          return f.isValid && (f.uploadStatus === 'Ready' || f.uploadStatus === 'Failed');
+        }).length;
+        var totalSize = state.stagedFiles.reduce(function (acc, f) { return acc + f.fileSize; }, 0);
+
+        var rowsHtml = state.stagedFiles.map(function (item) {
+          var statusCell = '';
+          if (!item.isValid) {
+            statusCell = '<div class="text-rose-600 text-xs font-medium">' + escapeHtml(item.validationError) + '</div>';
+          } else {
+            var badge = item.uploadStatus === 'Ready'
+              ? '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">' + ICONS.checkCircle + '<span>Validated · Ready</span></span>'
+              : renderStatusBadge(item.uploadStatus, 'sm');
+            var progBar = (item.uploadStatus === 'Uploading' || item.uploadProgress > 0)
+              ? '<div class="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden mt-1.5"><div style="width:' + item.uploadProgress + '%" class="h-full transition-all duration-300 ' + (item.uploadStatus === 'Failed' ? 'bg-rose-500' : (item.uploadStatus === 'Completed' ? 'bg-emerald-500' : 'bg-blue-600')) + '"></div></div>'
+              : '';
+            var errLine = item.errorMessage ? '<p class="text-[11px] text-rose-600 mt-1">' + escapeHtml(item.errorMessage) + '</p>' : '';
+            statusCell = '<div><div class="flex items-center justify-between gap-2">' + badge + (item.uploadProgress > 0 ? '<span class="text-[11px] font-mono text-slate-500">' + item.uploadProgress + '%</span>' : '') + '</div>' + progBar + errLine + '</div>';
+          }
+
+          var canSingleUpload = item.isValid && (item.uploadStatus === 'Ready' || item.uploadStatus === 'Failed');
+          return (
+            '<tr class="hover:bg-slate-50/80 transition-colors ' + (!item.isValid ? 'bg-rose-50/30' : '') + '">' +
+              '<td class="py-3.5 px-4 font-medium text-slate-900 max-w-xs">' +
+                '<p class="truncate font-semibold text-slate-900">' + escapeHtml(item.filename) + '</p>' +
+                (item.linkedCvId ? '<p class="text-[11px] font-mono text-slate-400">ID: ' + escapeHtml(item.linkedCvId) + '</p>' : '') +
+              '</td>' +
+              '<td class="py-3.5 px-3">' + renderFileTypeBadge(item.fileType) + '</td>' +
+              '<td class="py-3.5 px-3 text-slate-600 whitespace-nowrap font-mono text-[11px]">' + formatBytes(item.fileSize) + '</td>' +
+              '<td class="py-3.5 px-3 text-slate-500 whitespace-nowrap">' + escapeHtml(formatShortDate(item.selectedAt)) + '</td>' +
+              '<td class="py-3.5 px-4 min-w-[220px]">' + statusCell + '</td>' +
+              '<td class="py-3.5 px-4 text-right whitespace-nowrap">' +
+                '<div class="inline-flex items-center gap-1.5">' +
+                  (canSingleUpload ? '<button type="button" data-stage-upload="' + item.stagingId + '" ' + (state.isBatchProcessing ? 'disabled' : '') + ' class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50">' + (item.uploadStatus === 'Failed' ? 'Retry' : 'Upload') + '</button>' : '') +
+                  (item.linkedCvId ? '<button type="button" data-inspect-cv="' + escapeHtml(item.linkedCvId) + '" class="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100" title="View CV Details">' + ICONS.eye + '</button>' : '') +
+                  '<button type="button" data-stage-remove="' + item.stagingId + '" ' + (item.uploadStatus === 'Uploading' ? 'disabled' : '') + ' class="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-40" title="Remove from queue">' + ICONS.trash + '</button>' +
+                '</div>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        stagedContainer.innerHTML =
+          '<div class="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">' +
+            '<div class="p-4 md:px-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/60">' +
+              '<div>' +
+                '<div class="flex items-center gap-2.5">' +
+                  '<h3 class="text-sm font-semibold text-slate-900">Selected CVs Preview Queue (' + state.stagedFiles.length + ')</h3>' +
+                  (state.activeBatchId ? '<span class="px-2 py-0.5 text-[11px] font-mono rounded bg-blue-50 text-blue-700 border border-blue-200">Batch: ' + escapeHtml(state.activeBatchId) + '</span>' : '') +
+                '</div>' +
+                '<p class="text-xs text-slate-500 mt-0.5">' + validCount + ' valid · ' + invalidCount + ' invalid · Total size: ' + formatBytes(totalSize) + '</p>' +
+              '</div>' +
+              '<div class="flex flex-wrap items-center gap-2.5">' +
+                (invalidCount > 0 ? '<button type="button" id="btn-stage-remove-invalid" class="px-3 py-2 rounded-lg text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100">Remove Invalid (' + invalidCount + ')</button>' : '') +
+                '<button type="button" id="btn-stage-clear-all" ' + (state.isBatchProcessing ? 'disabled' : '') + ' class="px-3 py-2 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-50">Clear All Selected</button>' +
+                '<button type="button" id="btn-start-processing" ' + (state.isBatchProcessing || readyCount === 0 ? 'disabled' : '') + ' class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">' +
+                  (state.isBatchProcessing ? 'Processing Queue...' : 'Start Processing (' + readyCount + ')') +
+                '</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="overflow-x-auto">' +
+              '<table class="w-full text-left border-collapse">' +
+                '<thead><tr class="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50/40">' +
+                  '<th class="py-3 px-4">File Name</th><th class="py-3 px-3">Type</th><th class="py-3 px-3">Size</th><th class="py-3 px-3">Selected Date</th><th class="py-3 px-4">Validation &amp; Upload Status</th><th class="py-3 px-4 text-right">Actions</th>' +
+                '</tr></thead>' +
+                '<tbody class="divide-y divide-slate-100 text-xs">' + rowsHtml + '</tbody>' +
+              '</table>' +
+            '</div>' +
+          '</div>';
+
+        // Bind queue actions
+        var btnStart = document.getElementById('btn-start-processing');
+        if (btnStart) {
+          btnStart.addEventListener('click', function () { startUploadProcessing(); });
+        }
+        var btnClearAll = document.getElementById('btn-stage-clear-all');
+        if (btnClearAll) {
+          btnClearAll.addEventListener('click', function () {
+            state.stagedFiles = [];
+            renderAll();
+          });
+        }
+        var btnRemInv = document.getElementById('btn-stage-remove-invalid');
+        if (btnRemInv) {
+          btnRemInv.addEventListener('click', function () {
+            state.stagedFiles = state.stagedFiles.filter(function (f) { return f.isValid; });
+            renderAll();
+          });
+        }
+        Array.prototype.forEach.call(stagedContainer.querySelectorAll('[data-stage-upload]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var sid = btn.getAttribute('data-stage-upload');
+            startUploadProcessing([sid]);
+          });
+        });
+        Array.prototype.forEach.call(stagedContainer.querySelectorAll('[data-stage-remove]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var sid = btn.getAttribute('data-stage-remove');
+            state.stagedFiles = state.stagedFiles.filter(function (f) { return f.stagingId !== sid; });
+            renderAll();
+          });
+        });
+        Array.prototype.forEach.call(stagedContainer.querySelectorAll('[data-inspect-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            state.inspectedCvId = btn.getAttribute('data-inspect-cv');
+            renderDetailsDrawer();
+          });
+        });
+      }
+
+      // 3. RENDER CV LIBRARY VIEW
+      function renderLibraryView() {
+        var q = state.searchQuery.trim().toLowerCase();
+        var filtered = state.cvRecords.filter(function (r) {
+          if (q && r.filename.toLowerCase().indexOf(q) === -1 && r.id.toLowerCase().indexOf(q) === -1) return false;
+          if (state.statusFilter !== 'ALL' && r.status !== state.statusFilter) return false;
+          if (state.typeFilter !== 'ALL' && String(r.fileType).toLowerCase() !== state.typeFilter.toLowerCase()) return false;
+          return true;
+        });
+
+        filtered.sort(function (a, b) {
+          if (state.sortOrder === 'newest') return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+          if (state.sortOrder === 'oldest') return new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime();
+          if (state.sortOrder === 'size_desc') return (b.fileSize || 0) - (a.fileSize || 0);
+          if (state.sortOrder === 'name_asc') return a.filename.localeCompare(b.filename);
+          return 0;
+        });
+
+        var pageSize = Number(state.settings.defaultPageSize) || 10;
+        var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        if (state.currentPage > totalPages) state.currentPage = totalPages;
+        var startIdx = (state.currentPage - 1) * pageSize;
+        var paginated = filtered.slice(startIdx, startIdx + pageSize);
+
+        var clearBtn = document.getElementById('btn-clear-library-search');
+        if (state.searchQuery) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+
+        // Bulk bar
+        var bulkBar = document.getElementById('library-bulk-bar');
+        if (state.selectedCvIds.size > 0) {
+          bulkBar.classList.remove('hidden');
+          bulkBar.innerHTML =
+            '<div class="flex items-center gap-2 text-xs font-medium text-slate-700">' +
+              '<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold">' + state.selectedCvIds.size + ' selected</span>' +
+              '<button type="button" id="btn-bulk-clear-sel" class="text-slate-500 hover:text-slate-800 underline">Clear selection</button>' +
+            '</div>' +
+            '<div class="flex items-center gap-2">' +
+              '<button type="button" id="btn-bulk-retry" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">' + ICONS.refresh + '<span>Bulk Retry Failed</span></button>' +
+              '<button type="button" id="btn-bulk-delete" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200">' + ICONS.trash + '<span>Delete Selected (' + state.selectedCvIds.size + ')</span></button>' +
+            '</div>';
+
+          document.getElementById('btn-bulk-clear-sel').addEventListener('click', function () {
+            state.selectedCvIds.clear();
+            renderLibraryView();
+          });
+          document.getElementById('btn-bulk-retry').addEventListener('click', function () {
+            handleBulkRetryFailed(Array.from(state.selectedCvIds));
+          });
+          document.getElementById('btn-bulk-delete').addEventListener('click', function () {
+            var ids = Array.from(state.selectedCvIds);
+            openConfirmModal(
+              'Delete ' + ids.length + ' Selected CV Record' + (ids.length > 1 ? 's' : '') + '?',
+              'This will permanently remove the selected CV metadata and any locally cached binary files from your browser IndexedDB.',
+              'Delete ' + ids.length + ' Record' + (ids.length > 1 ? 's' : ''),
+              function () {
+                var chain = Promise.resolve();
+                ids.forEach(function (id) {
+                  chain = chain.then(function () { return dbDeleteCV(id); });
+                });
+                chain.then(function () {
+                  state.selectedCvIds.clear();
+                  closeConfirmModal();
+                  return refreshDataAndRender();
+                }).then(function () {
+                  addToast('info', 'Deleted ' + ids.length + ' CV Records');
+                });
+              }
+            );
+          });
+        } else {
+          bulkBar.classList.add('hidden');
+          bulkBar.innerHTML = '';
+        }
+
+        var tableContainer = document.getElementById('library-table-container');
+        if (filtered.length === 0) {
+          tableContainer.innerHTML =
+            '<div class="py-16 px-4 text-center">' +
+              '<h3 class="text-sm font-semibold text-slate-900">' + (state.cvRecords.length === 0 ? 'Your CV Library is Empty' : 'No Matching CV Records') + '</h3>' +
+              '<p class="text-xs text-slate-500 max-w-md mx-auto mt-1">' +
+                (state.cvRecords.length === 0
+                  ? 'Upload PDF, DOC, or DOCX files in the Upload Center to populate your internal CV repository.'
+                  : 'Try clearing your search query or adjusting the status and file format filters.') +
+              '</p>' +
+              '<div class="mt-4 flex justify-center gap-2">' +
+                (state.cvRecords.length === 0
+                  ? '<button type="button" id="btn-lib-empty-upload" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800">Upload CVs</button>'
+                  : '<button type="button" id="btn-lib-reset-filters" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Reset All Filters</button>') +
+              '</div>' +
+            '</div>';
+
+          var empUp = document.getElementById('btn-lib-empty-upload');
+          if (empUp) empUp.addEventListener('click', function () { setActiveTab('upload'); });
+          var resFil = document.getElementById('btn-lib-reset-filters');
+          if (resFil) {
+            resFil.addEventListener('click', function () {
+              state.searchQuery = '';
+              state.statusFilter = 'ALL';
+              state.typeFilter = 'ALL';
+              document.getElementById('library-search-input').value = '';
+              document.getElementById('library-status-filter').value = 'ALL';
+              document.getElementById('library-type-filter').value = 'ALL';
+              renderLibraryView();
+            });
+          }
+          return;
+        }
+
+        var allPageSelected = paginated.length > 0 && paginated.every(function (r) { return state.selectedCvIds.has(r.id); });
+        var rowsHtml = paginated.map(function (record) {
+          var isSel = state.selectedCvIds.has(record.id);
+          return (
+            '<tr class="hover:bg-slate-50/90 transition-colors ' + (isSel ? 'bg-blue-50/30' : '') + '">' +
+              '<td class="py-3.5 pl-4 pr-2">' +
+                '<input type="checkbox" data-select-cv="' + escapeHtml(record.id) + '" ' + (isSel ? 'checked' : '') + ' class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer" />' +
+              '</td>' +
+              '<td class="py-3.5 px-3 max-w-xs">' +
+                '<button type="button" data-inspect-cv="' + escapeHtml(record.id) + '" class="text-left group block w-full">' +
+                  '<p class="font-semibold text-slate-900 group-hover:text-blue-600 truncate transition-colors">' + escapeHtml(record.filename) + '</p>' +
+                  '<div class="flex items-center gap-2 mt-1 flex-wrap">' +
+                    '<span class="text-[10px] font-mono text-slate-400">' + escapeHtml(record.id) + '</span>' +
+                    (record.hasLocalBlob ? '<span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600" title="Stored locally in browser IndexedDB">Local</span>' : '') +
+                    (record.transmittedToN8n ? '<span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700" title="Transmitted to n8n webhook">n8n</span>' : '') +
+                    (record.externalStorageConfirmed ? '<span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700" title="External permanent storage confirmed">Stored Externally</span>' : '') +
+                  '</div>' +
+                '</button>' +
+              '</td>' +
+              '<td class="py-3.5 px-3">' + renderFileTypeBadge(record.fileType) + '</td>' +
+              '<td class="py-3.5 px-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">' + formatBytes(record.fileSize) + '</td>' +
+              '<td class="py-3.5 px-3 text-slate-500 whitespace-nowrap">' + escapeHtml(formatDateTime(record.uploadDate)) + '</td>' +
+              '<td class="py-3.5 px-3 whitespace-nowrap">' + renderStatusBadge(record.status, 'sm') + '</td>' +
+              '<td class="py-3.5 px-4 text-right whitespace-nowrap">' +
+                '<div class="inline-flex items-center gap-1">' +
+                  '<button type="button" data-inspect-cv="' + escapeHtml(record.id) + '" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100" title="View Details">' + ICONS.eye + '</button>' +
+                  (record.hasLocalBlob ? '<button type="button" data-download-cv="' + escapeHtml(record.id) + '" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Download Original File">' + ICONS.download + '</button>' : '') +
+                  '<button type="button" data-retry-cv="' + escapeHtml(record.id) + '" ' + (record.status === 'Uploading' ? 'disabled' : '') + ' class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-40" title="Retry Processing">' + ICONS.refresh + '</button>' +
+                  '<button type="button" data-delete-cv="' + escapeHtml(record.id) + '" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Delete Record">' + ICONS.trash + '</button>' +
+                '</div>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        tableContainer.innerHTML =
+          '<div class="overflow-x-auto">' +
+            '<table class="w-full text-left border-collapse">' +
+              '<thead><tr class="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50/60">' +
+                '<th class="py-3.5 pl-4 pr-2 w-9"><input type="checkbox" id="chk-select-all-page" ' + (allPageSelected ? 'checked' : '') + ' class="h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer" title="Select all on page" /></th>' +
+                '<th class="py-3.5 px-3">CV Filename &amp; Storage State</th><th class="py-3.5 px-3">File Type</th><th class="py-3.5 px-3">File Size</th><th class="py-3.5 px-3">Upload Date</th><th class="py-3.5 px-3">Processing Status</th><th class="py-3.5 px-4 text-right">Actions</th>' +
+              '</tr></thead>' +
+              '<tbody class="divide-y divide-slate-100 text-xs">' + rowsHtml + '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="px-4 py-3 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">' +
+            '<div>Showing <span class="font-semibold text-slate-900">' + (startIdx + 1) + '</span> to <span class="font-semibold text-slate-900">' + Math.min(startIdx + pageSize, filtered.length) + '</span> of <span class="font-semibold text-slate-900">' + filtered.length + '</span> records</div>' +
+            '<div class="flex items-center gap-1.5">' +
+              '<button type="button" id="btn-page-prev" ' + (state.currentPage <= 1 ? 'disabled' : '') + ' class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40">Previous</button>' +
+              '<span class="px-3 py-1.5 font-medium text-slate-700">Page ' + state.currentPage + ' of ' + totalPages + '</span>' +
+              '<button type="button" id="btn-page-next" ' + (state.currentPage >= totalPages ? 'disabled' : '') + ' class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40">Next</button>' +
+            '</div>' +
+          '</div>';
+
+        // Attach table listeners
+        var chkAll = document.getElementById('chk-select-all-page');
+        if (chkAll) {
+          chkAll.addEventListener('change', function () {
+            if (allPageSelected) {
+              paginated.forEach(function (r) { state.selectedCvIds.delete(r.id); });
+            } else {
+              paginated.forEach(function (r) { state.selectedCvIds.add(r.id); });
+            }
+            renderLibraryView();
+          });
+        }
+
+        Array.prototype.forEach.call(tableContainer.querySelectorAll('[data-select-cv]'), function (chk) {
+          chk.addEventListener('change', function () {
+            var id = chk.getAttribute('data-select-cv');
+            if (chk.checked) state.selectedCvIds.add(id);
+            else state.selectedCvIds.delete(id);
+            renderLibraryView();
+          });
+        });
+
+        Array.prototype.forEach.call(tableContainer.querySelectorAll('[data-inspect-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            state.inspectedCvId = btn.getAttribute('data-inspect-cv');
+            renderDetailsDrawer();
+          });
+        });
+
+        Array.prototype.forEach.call(tableContainer.querySelectorAll('[data-download-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-download-cv');
+            var rec = state.cvRecords.find(function (r) { return r.id === id; });
+            if (rec) handleDownloadLocalCv(rec);
+          });
+        });
+
+        Array.prototype.forEach.call(tableContainer.querySelectorAll('[data-retry-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-retry-cv');
+            var rec = state.cvRecords.find(function (r) { return r.id === id; });
+            if (rec) handleRetryCv(rec);
+          });
+        });
+
+        Array.prototype.forEach.call(tableContainer.querySelectorAll('[data-delete-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-delete-cv');
+            var rec = state.cvRecords.find(function (r) { return r.id === id; });
+            if (rec) handleDeleteSingleCv(rec);
+          });
+        });
+
+        var prevBtn = document.getElementById('btn-page-prev');
+        if (prevBtn) {
+          prevBtn.addEventListener('click', function () {
+            if (state.currentPage > 1) {
+              state.currentPage--;
+              renderLibraryView();
+            }
+          });
+        }
+        var nextBtn = document.getElementById('btn-page-next');
+        if (nextBtn) {
+          nextBtn.addEventListener('click', function () {
+            if (state.currentPage < totalPages) {
+              state.currentPage++;
+              renderLibraryView();
+            }
+          });
+        }
+      }
+
+      // 4. RENDER PROCESSING HISTORY VIEW
+      function renderHistoryView() {
+        var q = state.historySearch.trim().toLowerCase();
+        var filtered = state.historyEvents.filter(function (evt) {
+          if (
+            q &&
+            evt.cvFilename.toLowerCase().indexOf(q) === -1 &&
+            evt.cvId.toLowerCase().indexOf(q) === -1 &&
+            evt.message.toLowerCase().indexOf(q) === -1 &&
+            !(evt.batchId && evt.batchId.toLowerCase().indexOf(q) !== -1)
+          ) {
+            return false;
+          }
+          if (state.historyStatusFilter !== 'ALL' && evt.status !== state.historyStatusFilter) {
+            return false;
+          }
+          return true;
+        });
+
+        var container = document.getElementById('history-list-container');
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<div class="py-16 text-center px-4">' +
+              '<p class="text-sm font-semibold text-slate-800">No Processing Events Found</p>' +
+              '<p class="text-xs text-slate-500 mt-1">Every file validation, n8n webhook request, HTTP response, and status update will be logged here.</p>' +
+            '</div>';
+          return;
+        }
+
+        container.innerHTML =
+          '<div class="divide-y divide-slate-100">' +
+            filtered.map(function (evt) {
+              return (
+                '<div class="p-4 hover:bg-slate-50/70 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">' +
+                  '<div class="space-y-1 min-w-0 flex-1">' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                      renderStatusBadge(evt.status, 'sm') +
+                      '<button type="button" data-inspect-cv="' + escapeHtml(evt.cvId) + '" class="text-xs font-semibold text-slate-900 hover:text-blue-600 truncate">' + escapeHtml(evt.cvFilename) + '</button>' +
+                      '<span class="text-[11px] font-mono text-slate-400">(' + escapeHtml(evt.cvId) + ')</span>' +
+                      (evt.batchId ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">' + escapeHtml(evt.batchId) + '</span>' : '') +
+                      (evt.httpStatus ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">HTTP ' + evt.httpStatus + '</span>' : '') +
+                      (evt.durationMs !== undefined ? '<span class="text-[10px] font-mono text-slate-400">' + evt.durationMs + ' ms</span>' : '') +
+                    '</div>' +
+                    '<p class="text-xs text-slate-700">' + escapeHtml(evt.message) + '</p>' +
+                    (evt.errorDetail ? '<p class="text-[11px] text-rose-600 bg-rose-50/70 px-2.5 py-1 rounded border border-rose-100 mt-1">' + escapeHtml(evt.errorDetail) + '</p>' : '') +
+                  '</div>' +
+                  '<div class="flex items-center gap-3 shrink-0">' +
+                    '<span class="text-xs text-slate-400 whitespace-nowrap">' + escapeHtml(formatDateTime(evt.timestamp)) + '</span>' +
+                    '<button type="button" data-inspect-cv="' + escapeHtml(evt.cvId) + '" class="px-2.5 py-1 rounded border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100">Inspect CV</button>' +
+                  '</div>' +
+                '</div>'
+              );
+            }).join('') +
+          '</div>';
+
+        Array.prototype.forEach.call(container.querySelectorAll('[data-inspect-cv]'), function (btn) {
+          btn.addEventListener('click', function () {
+            state.inspectedCvId = btn.getAttribute('data-inspect-cv');
+            renderDetailsDrawer();
+          });
+        });
+      }
+
+      // 5. RENDER SETTINGS VIEW
+      function renderSettingsView() {
+        var container = document.getElementById('view-settings');
+        var d = state.settingsDraft;
+        var stats = computeStats();
+        var hasUrl = Boolean(d.webhookUrl && d.webhookUrl.trim());
+
+        var statusBadgeClass = !hasUrl
+          ? 'bg-amber-50 text-amber-800 border-amber-200'
+          : (state.connTestResult && state.connTestResult.success
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            : (state.connTestResult && !state.connTestResult.success
+              ? 'bg-rose-50 text-rose-700 border-rose-200'
+              : 'bg-blue-50 text-blue-700 border-blue-200'));
+
+        var statusLabel = !hasUrl
+          ? 'Not Configured'
+          : (state.connTestResult && state.connTestResult.success
+            ? 'Verified & Connected'
+            : (state.connTestResult && !state.connTestResult.success
+              ? 'Connection Error'
+              : 'Configured (Untested)'));
+
+        container.innerHTML =
+          '<form id="settings-form" class="space-y-6">' +
+            '<!-- n8n Integration Card -->' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-6 shadow-sm space-y-5">' +
+              '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">' +
+                '<div>' +
+                  '<h2 class="text-sm font-semibold text-slate-900">n8n Webhook Integration</h2>' +
+                  '<p class="text-xs text-slate-500 mt-0.5">Configure the direct HTTP POST endpoint for multipart/form-data binary CV uploads</p>' +
+                '</div>' +
+                '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ' + statusBadgeClass + '">' + escapeHtml(statusLabel) + '</span>' +
+              '</div>' +
+
+              '<div class="grid grid-cols-1 md:grid-cols-2 gap-5">' +
+                '<div class="md:col-span-2">' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">n8n Webhook URL (HTTP POST · multipart/form-data)</label>' +
+                  '<div class="flex flex-col sm:flex-row gap-2.5">' +
+                    '<input type="url" id="inp-webhook-url" value="' + escapeHtml(d.webhookUrl) + '" placeholder="https://your-n8n-instance.app.n8n.cloud/webhook/cv-upload" class="flex-1 px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-blue-600" />' +
+                    '<button type="button" id="btn-test-webhook" ' + (state.isTestingConnection ? 'disabled' : '') + ' class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 shrink-0 cursor-pointer">' +
+                      (state.isTestingConnection ? 'Testing...' : 'Test Connection') +
+                    '</button>' +
+                  '</div>' +
+                '</div>' +
+
+                (state.connTestResult
+                  ? '<div class="md:col-span-2 p-3.5 rounded-lg border text-xs ' + (state.connTestResult.success ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' : 'bg-rose-50/70 border-rose-200 text-rose-900') + '">' +
+                      '<div class="flex items-center justify-between"><span class="font-semibold">Last Connection Probe (' + escapeHtml(formatDateTime(state.connTestResult.testedAt)) + ')</span>' +
+                      (state.connTestResult.latencyMs !== undefined ? '<span class="font-mono text-[11px]">' + state.connTestResult.latencyMs + ' ms</span>' : '') + '</div>' +
+                      '<p class="mt-1">' + escapeHtml(state.connTestResult.message) + '</p>' +
+                    '</div>'
+                  : '') +
+
+                '<div class="md:col-span-2">' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">Optional n8n Status-Check Endpoint URL (GET)</label>' +
+                  '<input type="url" id="inp-status-url" value="' + escapeHtml(d.statusEndpointUrl) + '" placeholder="https://your-n8n-instance.app.n8n.cloud/webhook/cv-status" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-blue-600" />' +
+                  '<p class="text-[11px] text-slate-500 mt-1">Used to query downstream workflow completion for CVs in "Sent to n8n" or "Processing" states.</p>' +
+                '</div>' +
+
+                '<div class="md:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">' +
+                  '<div class="flex items-start justify-between gap-4">' +
+                    '<div>' +
+                      '<label class="text-xs font-semibold text-slate-900">Strict Workflow Completion Confirmation (Recommended)</label>' +
+                      '<p class="text-xs text-slate-500 mt-0.5">An HTTP 200 response from n8n only confirms the file reached the webhook ("Sent to n8n"). When enabled, a CV is only marked "Completed" when the JSON response explicitly contains your completion key/value.</p>' +
+                    '</div>' +
+                    '<input type="checkbox" id="chk-strict-completion" ' + (d.requireExplicitCompletionFlag ? 'checked' : '') + ' class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600" />' +
+                  '</div>' +
+                  '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">' +
+                    '<div><label class="block text-[11px] font-medium text-slate-600 mb-1">JSON Completion Property Key</label><input type="text" id="inp-comp-field" value="' + escapeHtml(d.completionJsonField) + '" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono" /></div>' +
+                    '<div><label class="block text-[11px] font-medium text-slate-600 mb-1">Expected Completed Value</label><input type="text" id="inp-comp-val" value="' + escapeHtml(d.completionJsonValue) + '" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono" /></div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<!-- Upload & Validation Settings -->' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-6 shadow-sm space-y-5">' +
+              '<div class="pb-4 border-b border-slate-100">' +
+                '<h2 class="text-sm font-semibold text-slate-900">Upload &amp; Validation Settings</h2>' +
+                '<p class="text-xs text-slate-500 mt-0.5">Configure file size limits, allowed CV extensions, batch concurrency, and request timeouts</p>' +
+              '</div>' +
+
+              '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">' +
+                '<div>' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">Maximum File Size (MB)</label>' +
+                  '<input type="number" id="inp-max-size" min="1" max="200" value="' + d.maxFileSizeMB + '" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs" />' +
+                '</div>' +
+                '<div>' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">HTTP Request Timeout (Seconds)</label>' +
+                  '<input type="number" id="inp-timeout-sec" min="5" max="300" value="' + d.requestTimeoutSec + '" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs" />' +
+                '</div>' +
+                '<div>' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">Batch Upload Strategy</label>' +
+                  '<select id="sel-batch-mode" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs">' +
+                    '<option value="sequential" ' + (d.batchUploadMode === 'sequential' ? 'selected' : '') + '>Sequential (One by One)</option>' +
+                    '<option value="concurrent" ' + (d.batchUploadMode === 'concurrent' ? 'selected' : '') + '>Concurrent Batch</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div>' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-2">Allowed File Formats</label>' +
+                  '<div class="flex items-center gap-4">' +
+                    ['pdf', 'doc', 'docx'].map(function (fmt) {
+                      var checked = d.allowedFormats.indexOf(fmt) !== -1;
+                      return '<label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer"><input type="checkbox" data-fmt-chk="' + fmt + '" ' + (checked ? 'checked' : '') + ' class="rounded border-slate-300 text-blue-600" /><span class="uppercase">.' + fmt + '</span></label>';
+                    }).join('') +
+                  '</div>' +
+                '</div>' +
+                '<div class="sm:col-span-2 flex items-center justify-between p-3.5 rounded-lg bg-slate-50 border border-slate-200/70">' +
+                  '<div><p class="text-xs font-semibold text-slate-800">Prevent Duplicate Filenames</p><p class="text-[11px] text-slate-500">Reject files during upload validation if a CV with the same filename and byte size already exists</p></div>' +
+                  '<input type="checkbox" id="chk-prevent-dup" ' + (d.preventDuplicateFilenames ? 'checked' : '') + ' class="h-4 w-4 rounded border-slate-300 text-blue-600" />' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<!-- Application & Local Data Management -->' +
+            '<div class="bg-white rounded-xl border border-slate-200/90 p-6 shadow-sm space-y-5">' +
+              '<div class="pb-4 border-b border-slate-100">' +
+                '<h2 class="text-sm font-semibold text-slate-900">Application Preferences &amp; Local IndexedDB Persistence</h2>' +
+                '<p class="text-xs text-slate-500 mt-0.5">Manage table pagination, browser binary caching, and local data cleanup</p>' +
+              '</div>' +
+
+              '<div class="grid grid-cols-1 md:grid-cols-2 gap-5">' +
+                '<div>' +
+                  '<label class="block text-xs font-semibold text-slate-800 mb-1.5">Default CV Library Table Page Size</label>' +
+                  '<select id="sel-page-size" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs">' +
+                    [10, 25, 50, 100].map(function (sz) {
+                      return '<option value="' + sz + '" ' + (Number(d.defaultPageSize) === sz ? 'selected' : '') + '>' + sz + ' records per page</option>';
+                    }).join('') +
+                  '</select>' +
+                '</div>' +
+                '<div class="flex items-center justify-between p-3.5 rounded-lg bg-slate-50 border border-slate-200/70">' +
+                  '<div><p class="text-xs font-semibold text-slate-800">Cache Binary CV Files in Browser IndexedDB</p><p class="text-[11px] text-slate-500">Enables downloading original files and retrying failed uploads across page refreshes</p></div>' +
+                  '<input type="checkbox" id="chk-store-blobs" ' + (d.storeBinaryInIndexedDB ? 'checked' : '') + ' class="h-4 w-4 rounded border-slate-300 text-blue-600" />' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">' +
+                '<div>' +
+                  '<h3 class="text-xs font-semibold text-slate-900">Browser Storage Usage &amp; Local Data Management</h3>' +
+                  '<p class="text-[11px] text-slate-500 mt-0.5">Currently storing <strong class="text-slate-800">' + stats.total + '</strong> metadata records, <strong class="text-slate-800">' + stats.localBlobsCount + '</strong> binary files (<strong class="text-slate-800">' + formatBytes(stats.totalBytesStoredLocally) + '</strong>), and <strong class="text-slate-800">' + state.historyEvents.length + '</strong> audit events in this browser.</p>' +
+                '</div>' +
+                '<div class="flex flex-wrap items-center gap-2.5 pt-1">' +
+                  '<button type="button" id="btn-export-json" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-100">' + ICONS.download + '<span>Export Metadata (JSON)</span></button>' +
+                  '<button type="button" id="btn-purge-blobs" ' + (stats.localBlobsCount === 0 ? 'disabled' : '') + ' class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40">Purge Local Binary Files (' + stats.localBlobsCount + ')</button>' +
+                  '<button type="button" id="btn-clear-all-db" ' + (stats.total === 0 && state.historyEvents.length === 0 ? 'disabled' : '') + ' class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 disabled:opacity-40">' + ICONS.trash + '<span>Clear All Local Records</span></button>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="pt-2 flex items-center justify-end gap-3">' +
+                '<button type="button" id="btn-restore-defaults" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100">Restore Defaults</button>' +
+                '<button type="submit" class="px-5 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm cursor-pointer">Save Configuration</button>' +
+              '</div>' +
+            '</div>' +
+          '</form>';
+
+        // Sync form inputs to settingsDraft
+        function syncDraftFromInputs() {
+          state.settingsDraft.webhookUrl = document.getElementById('inp-webhook-url').value.trim();
+          state.settingsDraft.statusEndpointUrl = document.getElementById('inp-status-url').value.trim();
+          state.settingsDraft.requireExplicitCompletionFlag = document.getElementById('chk-strict-completion').checked;
+          state.settingsDraft.completionJsonField = document.getElementById('inp-comp-field').value.trim() || 'status';
+          state.settingsDraft.completionJsonValue = document.getElementById('inp-comp-val').value.trim() || 'completed';
+          state.settingsDraft.maxFileSizeMB = Math.max(1, Math.min(200, Number(document.getElementById('inp-max-size').value) || 15));
+          state.settingsDraft.requestTimeoutSec = Math.max(5, Math.min(300, Number(document.getElementById('inp-timeout-sec').value) || 45));
+          state.settingsDraft.batchUploadMode = document.getElementById('sel-batch-mode').value;
+          state.settingsDraft.preventDuplicateFilenames = document.getElementById('chk-prevent-dup').checked;
+          state.settingsDraft.defaultPageSize = Number(document.getElementById('sel-page-size').value) || 10;
+          state.settingsDraft.storeBinaryInIndexedDB = document.getElementById('chk-store-blobs').checked;
+
+          var fmts = [];
+          Array.prototype.forEach.call(container.querySelectorAll('[data-fmt-chk]'), function (chk) {
+            if (chk.checked) fmts.push(chk.getAttribute('data-fmt-chk'));
+          });
+          if (fmts.length > 0) state.settingsDraft.allowedFormats = fmts;
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', function (e) {
+          e.preventDefault();
+          syncDraftFromInputs();
+          state.settings = Object.assign({}, state.settingsDraft);
+          saveSettings(state.settings);
+          renderAll();
+          addToast('success', 'Configuration Saved', 'Your n8n integration, upload limits, and persistence preferences have been updated.');
+        });
+
+        document.getElementById('btn-restore-defaults').addEventListener('click', function () {
+          state.settingsDraft = Object.assign({}, DEFAULT_SETTINGS);
+          renderSettingsView();
+        });
+
+        document.getElementById('btn-test-webhook').addEventListener('click', function () {
+          syncDraftFromInputs();
+          var targetUrl = state.settingsDraft.webhookUrl;
+          if (!targetUrl) {
+            addToast('warning', 'Webhook URL Empty', 'Enter your n8n Webhook URL first before running a connection test.');
+            return;
+          }
+          state.isTestingConnection = true;
+          renderSettingsView();
+
+          var startPerf = performance.now();
+          var controller = new AbortController();
+          var timeoutId = setTimeout(function () { controller.abort(); }, 12000);
+
+          var probeFormData = new FormData();
+          var probeBlob = new Blob(['CV Management Dashboard Connectivity Check'], { type: 'text/plain' });
+          probeFormData.append('file', probeBlob, 'connection_probe.txt');
+          probeFormData.append('cvId', 'probe_connectivity_test');
+          probeFormData.append('probe', 'true');
+          probeFormData.append('uploadTimestamp', new Date().toISOString());
+
+          fetch(targetUrl, {
+            method: 'POST',
+            body: probeFormData,
+            signal: controller.signal,
+            mode: 'cors'
+          }).then(function (res) {
+            clearTimeout(timeoutId);
+            var latency = Math.round(performance.now() - startPerf);
+            state.connTestResult = {
+              testedAt: new Date().toISOString(),
+              success: res.ok,
+              httpStatus: res.status,
+              latencyMs: latency,
+              message: res.ok
+                ? 'Successfully reached n8n Webhook (HTTP ' + res.status + ' in ' + latency + ' ms). CORS is properly configured.'
+                : 'Reached endpoint (HTTP ' + res.status + '), but server returned an error status. Verify that the n8n workflow is active.'
+            };
+            saveConnTest(state.connTestResult);
+            state.isTestingConnection = false;
+            renderAll();
+            addToast(res.ok ? 'success' : 'warning', res.ok ? 'n8n Webhook Connected' : 'HTTP ' + res.status + ' Response', state.connTestResult.message);
+          }).catch(function (err) {
+            clearTimeout(timeoutId);
+            var latency = Math.round(performance.now() - startPerf);
+            var msg = err && err.message ? err.message : 'Network error';
+            state.connTestResult = {
+              testedAt: new Date().toISOString(),
+              success: false,
+              latencyMs: latency,
+              message: 'Connection failed (' + msg + '). Verify the URL uses HTTPS, the n8n workflow is listening, and CORS headers allow requests from this origin.'
+            };
+            saveConnTest(state.connTestResult);
+            state.isTestingConnection = false;
+            renderAll();
+            addToast('error', 'Connection Test Failed', state.connTestResult.message);
+          });
+        });
+
+        document.getElementById('btn-export-json').addEventListener('click', function () {
+          var payload = {
+            exportedAt: new Date().toISOString(),
+            application: 'CV Management Dashboard',
+            totalRecords: state.cvRecords.length,
+            records: state.cvRecords,
+            history: state.historyEvents
+          };
+          var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'cv-management-records-' + new Date().toISOString().slice(0, 10) + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+          addToast('success', 'Metadata Exported', 'Downloaded JSON backup of all CV records and history.');
+        });
+
+        var btnPurge = document.getElementById('btn-purge-blobs');
+        if (btnPurge) {
+          btnPurge.addEventListener('click', function () {
+            openConfirmModal(
+              'Purge Locally Cached Binary Files?',
+              'This deletes the raw PDF/DOC/DOCX binary blobs stored in your browser IndexedDB to free disk space, while preserving all CV metadata, statuses, and n8n response summaries.',
+              'Purge Binary Blobs',
+              function () {
+                dbPurgeAllBlobs(state.cvRecords).then(function () {
+                  closeConfirmModal();
+                  return refreshDataAndRender();
+                }).then(function () {
+                  addToast('info', 'Local Binary Files Purged', 'CV metadata records have been retained.');
+                });
+              }
+            );
+          });
+        }
+
+        var btnClearAll = document.getElementById('btn-clear-all-db');
+        if (btnClearAll) {
+          btnClearAll.addEventListener('click', function () {
+            openConfirmModal(
+              'Delete All Local CV Records & History?',
+              'This will permanently clear all CV records, locally cached binary files, and processing history from this browser IndexedDB.',
+              'Delete All Local Data',
+              function () {
+                dbClearEverything().then(function () {
+                  state.selectedCvIds.clear();
+                  state.inspectedCvId = null;
+                  closeConfirmModal();
+                  return refreshDataAndRender();
+                }).then(function () {
+                  addToast('info', 'All Local Data Cleared', 'Browser IndexedDB has been reset.');
+                });
+              }
+            );
+          });
+        }
+      }
+
+      // 6. RENDER CV DETAILS DRAWER
+      function renderDetailsDrawer() {
+        var drawer = document.getElementById('cv-details-drawer');
+        var content = document.getElementById('cv-details-content');
+        var cv = state.cvRecords.find(function (r) { return r.id === state.inspectedCvId; });
+
+        if (!cv) {
+          drawer.classList.add('hidden');
+          drawer.classList.remove('flex');
+          content.innerHTML = '';
+          return;
+        }
+
+        drawer.classList.remove('hidden');
+        drawer.classList.add('flex');
+
+        var canPoll = (cv.status === 'Sent to n8n' || cv.status === 'Processing') && Boolean(state.settings.statusEndpointUrl && state.settings.statusEndpointUrl.trim());
+        var needsManualConfirm = cv.status === 'Sent to n8n' || cv.status === 'Processing';
+
+        var n8nRespHtml = '';
+        if (!cv.n8nResponse) {
+          n8nRespHtml = '<div class="p-4 rounded-lg border border-dashed border-slate-200 text-xs text-slate-500 text-center">No HTTP response received from n8n for this CV yet.</div>';
+        } else {
+          n8nRespHtml =
+            '<div class="rounded-xl border border-slate-200 overflow-hidden text-xs">' +
+              '<div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">' +
+                '<div class="flex items-center gap-2">' +
+                  '<span class="px-2 py-0.5 rounded font-mono font-semibold bg-slate-200 text-slate-800">HTTP ' + cv.n8nResponse.httpStatus + '</span>' +
+                  '<span class="text-slate-600 font-medium">' + cv.n8nResponse.durationMs + ' ms</span>' +
+                '</div>' +
+                '<button type="button" id="btn-drawer-copy-raw" class="text-[11px] font-medium text-slate-600 hover:text-slate-900">Copy Raw</button>' +
+              '</div>' +
+              '<div class="p-3 bg-white space-y-2">' +
+                '<p class="text-slate-700"><strong class="text-slate-900">Summary:</strong> ' + escapeHtml(cv.n8nResponse.message) + '</p>' +
+                (cv.n8nResponse.executionId ? '<p class="text-slate-600 font-mono text-[11px]">Execution ID: ' + escapeHtml(cv.n8nResponse.executionId) + '</p>' : '') +
+                '<pre class="p-3 rounded-lg bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto max-h-48">' + escapeHtml(cv.n8nResponse.rawPayload) + '</pre>' +
+              '</div>' +
+            '</div>';
+        }
+
+        content.innerHTML =
+          '<div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">' +
+            '<div class="min-w-0 pr-3">' +
+              '<div class="flex items-center gap-2">' + renderFileTypeBadge(cv.fileType) + '<h2 class="text-sm font-semibold text-slate-900 truncate">' + escapeHtml(cv.filename) + '</h2></div>' +
+              '<p class="text-[11px] font-mono text-slate-500 mt-0.5">CV ID: ' + escapeHtml(cv.id) + '</p>' +
+            '</div>' +
+            '<button type="button" id="btn-drawer-close-top" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">✕</button>' +
+          '</div>' +
+
+          '<div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">' +
+            '<div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200/80">' +
+              '<div><span class="text-[11px] font-medium text-slate-500 block mb-1">Current Processing Status</span>' + renderStatusBadge(cv.status) + '</div>' +
+              '<div class="flex flex-wrap items-center gap-2">' +
+                (cv.hasLocalBlob ? '<button type="button" id="btn-drawer-download" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-100">' + ICONS.download + '<span>Download File</span></button>' : '') +
+                (canPoll ? '<button type="button" id="btn-drawer-poll" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100">' + ICONS.refresh + '<span>Check n8n Status</span></button>' : '') +
+                '<button type="button" id="btn-drawer-retry" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800">' + ICONS.refresh + '<span>Retry Processing</span></button>' +
+              '</div>' +
+            '</div>' +
+
+            (cv.errorDetails
+              ? '<div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1.5"><div class="font-semibold text-rose-800">Processing Error Details</div><p class="leading-relaxed">' + escapeHtml(cv.errorDetails) + '</p></div>'
+              : '') +
+
+            '<div>' +
+              '<h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">CV Record Metadata</h3>' +
+              '<div class="grid grid-cols-2 gap-3 text-xs">' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">Original Filename</span><span class="font-semibold text-slate-900 break-all mt-0.5 block">' + escapeHtml(cv.filename) + '</span></div>' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">Unique CV ID</span><span class="font-mono font-medium text-slate-900 break-all mt-0.5 block">' + escapeHtml(cv.id) + '</span></div>' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">File Size &amp; Format</span><span class="font-semibold text-slate-900 mt-0.5 block">' + formatBytes(cv.fileSize) + ' (' + escapeHtml(String(cv.fileType).toUpperCase()) + ')</span></div>' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">MIME Type</span><span class="font-mono text-[11px] text-slate-700 break-all mt-0.5 block">' + escapeHtml(cv.mimeType) + '</span></div>' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">Upload Date</span><span class="font-medium text-slate-900 mt-0.5 block">' + escapeHtml(formatDateTime(cv.uploadDate)) + '</span></div>' +
+                '<div class="p-3 rounded-lg border border-slate-200/80 bg-white"><span class="text-slate-400 block text-[11px]">Batch ID / Retries</span><span class="font-mono text-slate-800 mt-0.5 block">' + escapeHtml(cv.batchId || 'Single Upload') + ' · ' + (cv.retryCount || 0) + ' retries</span></div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div>' +
+              '<h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Storage &amp; Persistence Verification</h3>' +
+              '<div class="space-y-2 text-xs">' +
+                '<div class="p-3 rounded-lg border border-slate-200 flex items-center justify-between">' +
+                  '<div><p class="font-semibold text-slate-900">Browser IndexedDB (Local File Copy)</p><p class="text-[11px] text-slate-500">' + (cv.hasLocalBlob ? 'Binary CV file is cached locally in this browser.' : 'Binary blob is not stored locally (metadata only).') + '</p></div>' +
+                  (cv.hasLocalBlob ? '<button type="button" id="btn-drawer-free-blob" class="px-2.5 py-1 rounded text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200">Free Local Blob</button>' : '<span class="text-[11px] text-slate-400">Not Cached</span>') +
+                '</div>' +
+                '<div class="p-3 rounded-lg border border-slate-200 flex items-center justify-between">' +
+                  '<div><p class="font-semibold text-slate-900">n8n Webhook Transmission</p><p class="text-[11px] text-slate-500">' + (cv.transmittedToN8n ? 'Binary multipart/form-data payload was received by n8n.' : 'Not yet confirmed received by n8n.') + '</p></div>' +
+                  '<span class="px-2 py-0.5 rounded text-[11px] font-semibold ' + (cv.transmittedToN8n ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500') + '">' + (cv.transmittedToN8n ? 'Transmitted' : 'Not Sent') + '</span>' +
+                '</div>' +
+                '<div class="p-3 rounded-lg border border-slate-200 flex items-center justify-between">' +
+                  '<div><p class="font-semibold text-slate-900">External Permanent Storage</p><p class="text-[11px] text-slate-500">' + (cv.externalStorageConfirmed ? 'Confirmed stored externally (' + escapeHtml(cv.externalStorageRef || 'verified') + ').' : 'No external permanent storage confirmation returned by n8n workflow.') + '</p></div>' +
+                  '<span class="px-2 py-0.5 rounded text-[11px] font-semibold ' + (cv.externalStorageConfirmed ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500') + '">' + (cv.externalStorageConfirmed ? 'Confirmed' : 'Unconfirmed') + '</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            (needsManualConfirm
+              ? '<div class="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-2.5">' +
+                  '<div class="text-xs text-indigo-950"><p class="font-semibold">Awaiting Downstream Workflow Completion Confirmation</p><p class="text-[11px] text-indigo-800 mt-0.5">n8n acknowledged the file upload (HTTP 200), but has not yet returned a completion payload. You can poll your status endpoint or manually confirm the outcome below.</p></div>' +
+                  '<div class="flex items-center gap-2 pt-1">' +
+                    '<button type="button" id="btn-drawer-mark-completed" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700">Mark as Completed</button>' +
+                    '<button type="button" id="btn-drawer-mark-failed" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white text-rose-700 border border-rose-200 hover:bg-rose-50">Mark as Failed</button>' +
+                  '</div>' +
+                '</div>'
+              : '') +
+
+            '<div><h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">n8n Webhook Response Summary</h3>' + n8nRespHtml + '</div>' +
+
+            '<div>' +
+              '<h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Processing History (' + (cv.history || []).length + ')</h3>' +
+              '<div class="space-y-3 border-l-2 border-slate-200 ml-2 pl-4">' +
+                (cv.history || []).map(function (evt) {
+                  return (
+                    '<div class="relative text-xs space-y-1">' +
+                      '<span class="w-2.5 h-2.5 rounded-full bg-slate-400 border-2 border-white absolute -left-[21px] top-1"></span>' +
+                      '<div class="flex items-center justify-between gap-2">' + renderStatusBadge(evt.status, 'sm') + '<span class="text-[11px] text-slate-400">' + escapeHtml(formatDateTime(evt.timestamp)) + '</span></div>' +
+                      '<p class="text-slate-700">' + escapeHtml(evt.message) + '</p>' +
+                    '</div>'
+                  );
+                }).join('') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between">' +
+            '<button type="button" id="btn-drawer-delete" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-700 hover:bg-rose-100">' + ICONS.trash + '<span>Delete Record</span></button>' +
+            '<button type="button" id="btn-drawer-close-bottom" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800">Close</button>' +
+          '</div>';
+
+        document.getElementById('btn-drawer-close-top').addEventListener('click', function () {
+          state.inspectedCvId = null;
+          renderDetailsDrawer();
+        });
+        document.getElementById('btn-drawer-close-bottom').addEventListener('click', function () {
+          state.inspectedCvId = null;
+          renderDetailsDrawer();
+        });
+        document.getElementById('btn-drawer-retry').addEventListener('click', function () {
+          handleRetryCv(cv);
+        });
+        document.getElementById('btn-drawer-delete').addEventListener('click', function () {
+          handleDeleteSingleCv(cv);
+        });
+        var dlBtn = document.getElementById('btn-drawer-download');
+        if (dlBtn) dlBtn.addEventListener('click', function () { handleDownloadLocalCv(cv); });
+        var pollBtn = document.getElementById('btn-drawer-poll');
+        if (pollBtn) pollBtn.addEventListener('click', function () { pollCvStatusFromN8n(cv); });
+        var freeBtn = document.getElementById('btn-drawer-free-blob');
+        if (freeBtn) {
+          freeBtn.addEventListener('click', function () {
+            dbDeleteBlobOnly(cv.id).then(function () {
+              return refreshDataAndRender();
+            }).then(function () {
+              addToast('info', 'Local Binary Removed', 'Metadata record kept.');
+            });
+          });
+        }
+        var copyBtn = document.getElementById('btn-drawer-copy-raw');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function () {
+            copyToClipboard(cv.n8nResponse.rawPayload);
+            addToast('info', 'Copied Response JSON');
+          });
+        }
+        var markCompBtn = document.getElementById('btn-drawer-mark-completed');
+        if (markCompBtn) {
+          markCompBtn.addEventListener('click', function () {
+            handleManualStatusUpdate(cv, 'Completed', 'Manually confirmed workflow completion in CV Details.');
+          });
+        }
+        var markFailBtn = document.getElementById('btn-drawer-mark-failed');
+        if (markFailBtn) {
+          markFailBtn.addEventListener('click', function () {
+            handleManualStatusUpdate(cv, 'Failed', 'Manually marked as failed in CV Details.');
+          });
+        }
+      }
+
+      // ====================================================================
+      // MASTER RENDER & INITIALIZATION
+      // ====================================================================
+      function renderAll() {
+        renderNavigationAndChrome();
+        if (state.activeTab === 'dashboard') renderDashboardView();
+        else if (state.activeTab === 'upload') renderUploadView();
+        else if (state.activeTab === 'library') renderLibraryView();
+        else if (state.activeTab === 'history') renderHistoryView();
+        else if (state.activeTab === 'settings') renderSettingsView();
+        renderDetailsDrawer();
+      }
+
+      function refreshDataAndRender() {
+        return Promise.all([dbGetAllCVs(), dbGetAllHistory()]).then(function (results) {
+          state.cvRecords = results[0];
+          state.historyEvents = results[1];
+          renderAll();
+        });
+      }
+
+      // Bind static top-level UI controls
+      function bindGlobalControls() {
+        document.getElementById('btn-toggle-sidebar').addEventListener('click', function () {
+          state.sidebarCollapsed = !state.sidebarCollapsed;
+          renderNavigationAndChrome();
+        });
+        document.getElementById('btn-sidebar-webhook-status').addEventListener('click', function () {
+          setActiveTab('settings');
+        });
+        document.getElementById('btn-header-webhook-pill').addEventListener('click', function () {
+          setActiveTab('settings');
+        });
+        document.getElementById('btn-header-upload-cta').addEventListener('click', function () {
+          setActiveTab('upload');
+        });
+        document.getElementById('btn-mobile-quick-upload').addEventListener('click', function () {
+          setActiveTab('upload');
+        });
+        document.getElementById('btn-open-mobile-menu').addEventListener('click', function () {
+          document.getElementById('mobile-drawer').classList.remove('hidden');
+        });
+        document.getElementById('btn-close-mobile-menu').addEventListener('click', function () {
+          document.getElementById('mobile-drawer').classList.add('hidden');
+        });
+        document.getElementById('mobile-drawer-backdrop').addEventListener('click', function () {
+          document.getElementById('mobile-drawer').classList.add('hidden');
+        });
+
+        // Banner buttons
+        document.getElementById('btn-banner-settings').addEventListener('click', function () {
+          setActiveTab('settings');
+        });
+        document.getElementById('btn-banner-guide').addEventListener('click', function () {
+          var m = document.getElementById('n8n-guide-modal');
+          m.classList.remove('hidden');
+          m.classList.add('flex');
+        });
+        document.getElementById('btn-open-n8n-guide').addEventListener('click', function () {
+          var m = document.getElementById('n8n-guide-modal');
+          m.classList.remove('hidden');
+          m.classList.add('flex');
+        });
+        function closeGuide() {
+          var m = document.getElementById('n8n-guide-modal');
+          m.classList.add('hidden');
+          m.classList.remove('flex');
+        }
+        document.getElementById('btn-close-n8n-guide-top').addEventListener('click', closeGuide);
+        document.getElementById('btn-close-n8n-guide-bottom').addEventListener('click', closeGuide);
+        document.getElementById('n8n-guide-backdrop').addEventListener('click', closeGuide);
+
+        // Confirm modal buttons
+        document.getElementById('btn-confirm-cancel').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirm-modal-backdrop').addEventListener('click', closeConfirmModal);
+        document.getElementById('btn-confirm-proceed').addEventListener('click', function () {
+          if (typeof state.confirmCallback === 'function') {
+            state.confirmCallback();
+          }
+        });
+
+        // Details drawer backdrop
+        document.getElementById('cv-details-backdrop').addEventListener('click', function () {
+          state.inspectedCvId = null;
+          renderDetailsDrawer();
+        });
+
+        // Upload drop-zone & file input
+        var dropZone = document.getElementById('drop-zone');
+        var fileInput = document.getElementById('file-input');
+        var browseBtn = document.getElementById('btn-browse-files');
+
+        browseBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          fileInput.click();
+        });
+        dropZone.addEventListener('click', function () {
+          fileInput.click();
+        });
+        fileInput.addEventListener('change', function (e) {
+          if (e.target.files && e.target.files.length > 0) {
+            handleFilesSelected(e.target.files);
+            e.target.value = '';
+          }
+        });
+        dropZone.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('border-blue-600', 'bg-blue-50/60');
+        });
+        dropZone.addEventListener('dragleave', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('border-blue-600', 'bg-blue-50/60');
+        });
+        dropZone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('border-blue-600', 'bg-blue-50/60');
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFilesSelected(e.dataTransfer.files);
+          }
+        });
+
+        // Library filter controls
+        document.getElementById('library-search-input').addEventListener('input', function (e) {
+          state.searchQuery = e.target.value;
+          state.currentPage = 1;
+          renderLibraryView();
+        });
+        document.getElementById('btn-clear-library-search').addEventListener('click', function () {
+          state.searchQuery = '';
+          document.getElementById('library-search-input').value = '';
+          state.currentPage = 1;
+          renderLibraryView();
+        });
+        document.getElementById('library-status-filter').addEventListener('change', function (e) {
+          state.statusFilter = e.target.value;
+          state.currentPage = 1;
+          renderLibraryView();
+        });
+        document.getElementById('library-type-filter').addEventListener('change', function (e) {
+          state.typeFilter = e.target.value;
+          state.currentPage = 1;
+          renderLibraryView();
+        });
+        document.getElementById('library-sort-order').addEventListener('change', function (e) {
+          state.sortOrder = e.target.value;
+          state.currentPage = 1;
+          renderLibraryView();
+        });
+
+        // History filter controls
+        document.getElementById('history-search-input').addEventListener('input', function (e) {
+          state.historySearch = e.target.value;
+          renderHistoryView();
+        });
+        document.getElementById('history-status-filter').addEventListener('change', function (e) {
+          state.historyStatusFilter = e.target.value;
+          renderHistoryView();
+        });
+        document.getElementById('btn-clear-history-log').addEventListener('click', function () {
+          if (state.historyEvents.length === 0) return;
+          openConfirmModal(
+            'Clear Processing History Log?',
+            'This clears the chronological event log while keeping your CV Library records intact.',
+            'Clear History Log',
+            function () {
+              dbClearHistoryOnly().then(function () {
+                closeConfirmModal();
+                return refreshDataAndRender();
+              }).then(function () {
+                addToast('info', 'History Log Cleared');
+              });
+            }
+          );
+        });
+      }
+
+      // Initialize app on load
+      window.addEventListener('DOMContentLoaded', function () {
+        state.settings = loadSettings();
+        state.settingsDraft = Object.assign({}, state.settings);
+        state.connTestResult = loadConnTest();
+        bindGlobalControls();
+        refreshDataAndRender();
+      });
+    })();
+  </script>
+</body>
+</html>
